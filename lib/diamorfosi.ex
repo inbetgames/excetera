@@ -20,7 +20,6 @@ defmodule Diamorfosi do
   def get(path, options // []) do
   	timeout = Keyword.get options, :timeout, @timeout
   	options = Keyword.delete options, :timeout
-  	IO.puts "calling #{@etcd}#{path} with timeout #{timeout}"
   	case HTTPotion.get "#{@etcd}#{path}", [], [timeout: timeout] do
   		HTTPotion.Response[status_code: 200, body: body] -> body |> JSEX.decode!
   		_ -> false
@@ -42,10 +41,8 @@ defmodule Diamorfosi do
 		  		wait path, Keyword.update(options, :waitIndex, (reply["modifiedIndex"] + 1), &(&1))
 		  	end).()
 		 value when is_integer(value) ->
+		 	options = Keyword.delete options, :waitIndex
 		 	get("#{path}?wait=true&waitIndex=#{value}", options)
 	end
   end
-  #def wait(path, index, options // []) do
-  #	get("#{path}?wait=true&waitIndex=#{index}")
-  #end
 end
