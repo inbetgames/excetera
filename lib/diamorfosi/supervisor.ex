@@ -9,6 +9,7 @@ defmodule Diamorfosi.Supervisor do
     children = [
       # Define workers and child supervisors to be supervised
       # worker(Diamorfosi.Worker, [])
+      worker(Diamorfosi.Cluster, ["jsonp"])
     ]
 
     # See http://elixir-lang.org/docs/stable/Supervisor.Behaviour.html

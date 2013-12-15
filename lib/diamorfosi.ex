@@ -1,7 +1,7 @@
 defmodule Diamorfosi do
   use Application.Behaviour
 
-  @etcd "http://my.host.name:4001/v2/keys"
+  @etcd "http://my.host.name:8080/v2/keys"
   @timeout 5000
   # See http://elixir-lang.org/docs/stable/Application.Behaviour.html
   # for more information on OTP Applications
@@ -22,7 +22,7 @@ defmodule Diamorfosi do
   	options = Keyword.delete options, :timeout
   	case HTTPotion.get "#{@etcd}#{path}", [], [timeout: timeout] do
   		HTTPotion.Response[status_code: 200, body: body] -> body |> JSEX.decode!
-  		_ -> false
+  		err -> false
   	end
   end
   def set(path, value, options // []) do
@@ -30,7 +30,8 @@ defmodule Diamorfosi do
   	options = Keyword.delete options, :timeout
   	case HTTPotion.request :put, "#{@etcd}#{path}", body_encode([value: value] ++ options), [{:'Content-Type', "application/x-www-form-urlencoded"}], [timeout: timeout] do
   		HTTPotion.Response[status_code: 200, body: body] -> body |> JSEX.decode!
-  		_ -> false
+  		HTTPotion.Response[status_code: 307] -> set path, value, options
+      response -> false
   	end
   end
   def wait(path, options // []) do 
