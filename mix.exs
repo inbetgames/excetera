@@ -4,7 +4,6 @@ defmodule Diamorfosi.Mixfile do
   def project do
     [ app: :diamorfosi,
       version: "0.0.1",
-      elixir: "~> 0.11.3-dev",
       deps: deps ]
   end
 
