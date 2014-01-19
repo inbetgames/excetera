@@ -22,7 +22,7 @@ defmodule Diamorfosi.Mixfile do
   # { :barbat, "~> 0.1", github: "elixir-lang/barbat" }
   defp deps do
     [
-      {:httpotion, github: "d0rc/httpotion"},
+      {:httpotion, github: "myfreeweb/httpotion"},
       {:jsex, github: "talentdeficit/jsex"}
     ]
   end
