@@ -21,10 +21,14 @@ defmodule Diamorfosi do
     case get_with_details(path, options) do
       false -> false
       details -> 
-        value = details["node"]["value"]
-        case JSEX.is_json? value do
-          true -> JSEX.decode!(value)
-          false -> value
+        case details["node"]["dir"] do
+          true -> details["node"]["nodes"]
+          false -> 
+            value = details["node"]["value"]
+            case JSEX.is_json? value do
+              true -> JSEX.decode!(value)
+              false -> value
+            end
         end
     end
   end
