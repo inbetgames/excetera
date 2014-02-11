@@ -18,6 +18,18 @@ defmodule Diamorfosi do
   end
 
   def get(path, options \\ []) do
+    case get_with_details(path, options) do
+      false -> false
+      details -> 
+        value = details["node"]["value"]
+        case JSEX.is_json? value do
+          true -> JSEX.decode!(value)
+          false -> value
+        end
+    end
+  end
+  
+  def get_with_details(path, options \\ []) do
   	timeout = Keyword.get options, :timeout, @timeout
   	options = Keyword.delete options, :timeout
   	case HTTPoison.get "#{@etcd}#{path}", [], [timeout: timeout] do
@@ -25,7 +37,9 @@ defmodule Diamorfosi do
   		err -> false
   	end
   end
-  def set(path, value, options \\ []) do
+  
+  def set(path, value), do: set(path, value, [])
+  def set(path, value, options) when is_binary(value) do
   	timeout = Keyword.get options, :timeout, @timeout
   	options = Keyword.delete options, :timeout
   	case HTTPoison.request :put, "#{@etcd}#{path}", body_encode([value: value] ++ options), [{"Content-Type", "application/x-www-form-urlencoded"}], [timeout: timeout] do
@@ -34,6 +48,10 @@ defmodule Diamorfosi do
       response -> false
   	end
   end
+  def set(path, value, options) do
+    set(path, JSEX.encode!(value), options)
+  end
+
   def wait(path, options \\ []) do 
   	case options[:waitIndex] do
   		nil -> 
