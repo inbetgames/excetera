@@ -11,7 +11,7 @@ defmodule Diamorfosi.Mixfile do
   def application do
     [
       mod: { Diamorfosi, [] },
-      applications: [:httpotion, :jsex]
+      applications: [:httpoison, :jsex]
     ]
   end
 
@@ -22,7 +22,7 @@ defmodule Diamorfosi.Mixfile do
   # { :barbat, "~> 0.1", github: "elixir-lang/barbat" }
   defp deps do
     [
-      {:httpotion, github: "myfreeweb/httpotion"},
+      {:httpoison, github: "d0rc/httpoison", branch: "fix-for-new-elixir"},
       {:jsex, github: "talentdeficit/jsex"}
     ]
   end

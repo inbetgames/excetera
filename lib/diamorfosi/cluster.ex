@@ -12,7 +12,7 @@ defmodule Diamorfosi.Cluster do
 			false -> :failed_to_list
 			catalogue ->
 				nodes = catalogue["node"]["nodes"]
-					|> Stream.map(&(&1["value"]))
+					|> Stream.map(fn object -> object["value"] end)
 					|> Enum.map(fn node ->
 						:net_adm.ping :erlang.binary_to_atom(node, :utf8)
 					end)
