@@ -11,7 +11,7 @@ defmodule Diamorfosi.Cluster do
 		case Diamorfosi.get "/#{name}/" do
 			false -> :failed_to_list
 			catalogue ->
-				nodes = catalogue["node"]["nodes"]
+				catalogue["node"]["nodes"]
 					|> Stream.map(fn object -> object["value"] end)
 					|> Enum.map(fn node ->
 						:net_adm.ping :erlang.binary_to_atom(node, :utf8)
