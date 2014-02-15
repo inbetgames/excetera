@@ -23,7 +23,7 @@ defmodule Diamorfosi do
       details -> 
         case details["node"]["dir"] do
           true -> details["node"]["nodes"]
-          false -> 
+          nil -> 
             value = details["node"]["value"]
             case JSEX.is_json? value do
               true -> JSEX.decode!(value)

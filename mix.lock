@@ -1,6 +1,6 @@
 [ "hackney": {:git, "git://github.com/benoitc/hackney.git", "7f2a0b5996313d930277786e7ff5d538e9346547", [tag: "0.10.1"]},
   "hackney_lib": {:git, "https://github.com/benoitc/hackney_lib.git", "eecdb481f1d38bfb194896bffdf9bdcdd967ae96", [tag: "0.2.2"]},
-  "httpoison": {:git, "git://github.com/d0rc/httpoison.git", "8a28f6821f4dbfd1f129ca61c31a8713a35d8dcf", [branch: "fix-for-new-elixir"]},
+  "httpoison": {:git, "git://github.com/edgurgel/httpoison.git", "aacfb553a446bd2b67d88428481378e8a3c4f41e", []},
   "httpotion": {:git, "git://github.com/myfreeweb/httpotion.git", "1e2c234b025c41cb2ff7570a35efa9f12d28f31b", []},
   "ibrowse": {:git, "git://github.com/cmullaparthi/ibrowse.git", "108c131d782c693bd3e26a6587da8196ef9282e3", []},
   "jsex": {:git, "git://github.com/talentdeficit/jsex.git", "3db1d520e00fb28c3eee4e5b30645d5878037c38", []},
