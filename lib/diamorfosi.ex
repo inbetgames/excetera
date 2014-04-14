@@ -72,7 +72,7 @@ defmodule Diamorfosi do
   def atomic(dataset_name, func) do
     case Diamorfosi.set("/atoms/#{dataset_name}", JSON.encode!([processing: true]), [prevExist: false]) do
       false -> {:error, dataset_name}
-      set_result ->
+      _set_result ->
         result = func.()
         Diamorfosi.set("/atoms/#{dataset_name}", JSON.encode!([processing: false]), [prevExist: true, ttl: 1])
         result

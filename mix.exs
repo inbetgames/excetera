@@ -10,13 +10,15 @@ defmodule Diamorfosi.Mixfile do
   def application do
     [
       mod: { Diamorfosi, [] },
-      applications: [:httpoison, :jazz]
+      applications: [:httpoison, :jazz, :exlager]
     ]
   end
 
   defp deps do
     [
       {:httpoison, github: "edgurgel/httpoison"},
+      {:exactor, github: "sasa1977/exactor"},
+      {:exlager, github: "khia/exlager"},
       {:jazz, github: "meh/jazz"}
     ]
   end

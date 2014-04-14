@@ -1,4 +1,7 @@
 %{"ets_lru": {:git, "https://github.com/cloudant/ets_lru.git", "54df566f02412595f69500ce2326d31cfa55ae7a", [ref: "master"]},
+  "exactor": {:git, "git://github.com/sasa1977/exactor.git", "2dcad56b231334a643c6f393578f2867dcc10b63", []},
+  "exlager": {:git, "git://github.com/khia/exlager.git", "d3d73b2a3d0f7b8f3da11a02b5f9384da6c62110", []},
+  "goldrush": {:git, "git://github.com/DeadZen/goldrush.git", "71e63212f12c25827e0c1b4198d37d5d018a7fec", [tag: "0.1.6"]},
   "hackney": {:git, "git://github.com/benoitc/hackney.git", "448025a8856b66da550ad8bb96a26477523f9f66", [tag: "0.11.1"]},
   "hackney_lib": {:git, "https://github.com/benoitc/hackney_lib.git", "bf4e6fde4dd6e08b7434af7b092596b3633a872c", [tag: "0.2.4"]},
   "httpoison": {:git, "git://github.com/edgurgel/httpoison.git", "07d6e98095130332e5c88f499c153a98cc15dc3e", []},
@@ -8,4 +11,5 @@
   "jazz": {:git, "git://github.com/meh/jazz.git", "c502fc3894249d677f0546bc02a9b866d5d32afa", []},
   "jsex": {:git, "git://github.com/talentdeficit/jsex.git", "65aa6ae7c1543a0c4e83032c04626af7be7a7f3e", []},
   "jsx": {:git, "git://github.com/talentdeficit/jsx.git", "e50af6e109cb03bd26acf715cbc77de746507d1d", [tag: "v1.4.3"]},
+  "lager": {:git, "https://github.com/basho/lager.git", "63c2ad6ba351e18d9f59f8f10cbcf7de128be95b", []},
   "mimetypes": {:git, "git://github.com/spawngrid/mimetypes.git", "47d37a977a7d633199822bf6b08353007483d00f", [ref: "master"]}}
