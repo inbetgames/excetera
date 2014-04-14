@@ -16,4 +16,8 @@ defmodule DiamorfosiTest do
   	:timer.sleep 1500
   	assert Diamorfosi.get("/test") == false
   end
+
+  test "serializing works" do
+    assert Diamorfosi.Serialize.unserialize(Diamorfosi.Serialize.serialize(%{some: :value}))
+  end
 end
