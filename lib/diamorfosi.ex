@@ -1,31 +1,31 @@
+import LAXer
+
 defmodule Diamorfosi do
   use Application.Behaviour
 
   @etcd "http://my.host.name:8080/v2/keys"
   @timeout 5000
-  # See http://elixir-lang.org/docs/stable/Application.Behaviour.html
-  # for more information on OTP Applications
   def start(_type, _args) do
     Diamorfosi.Supervisor.start_link
   end
 
-  defp body_encode(list) do
-  	Keyword.keys(list) 
-  		|> Stream.map(fn key ->
-  			"#{key}=#{list[key]}"
-  		end)
-  		|> Enum.join("&")
+  defmacrop body_encode(list) do
+    quote do
+      for {key, value} <- unquote(list), into: "" do
+        "#{key}=#{value}&"
+      end
+    end
   end
 
   def get(path, options \\ []) do
     case get_with_details(path, options) do
       false -> false
       details -> 
-        case details["node"]["dir"] do
-          true -> details["node"]["nodes"]
+        case la details["node"]["dir"] do
+          true -> la details["node"]["nodes"]
           nil -> 
-            value = details["node"]["value"]
-            case JSON.decode(value) do
+            value = la details["node"]["value"]
+            case Jazz.decode(value) do
               {:ok, json} -> json
               _ -> value
             end
@@ -36,7 +36,7 @@ defmodule Diamorfosi do
   def get_with_details(path, options \\ []) do
   	timeout = Keyword.get options, :timeout, @timeout
   	case HTTPoison.get "#{@etcd}#{path}", [], [timeout: timeout] do
-  		HTTPoison.Response[status_code: 200, body: body] -> body |> JSON.decode!
+  		HTTPoison.Response[status_code: 200, body: body] -> body |> Jazz.decode!
   		_ -> false
   	end
   end
@@ -46,13 +46,13 @@ defmodule Diamorfosi do
   	timeout = Keyword.get options, :timeout, @timeout
   	options = Keyword.delete options, :timeout
   	case HTTPoison.request :put, "#{@etcd}#{path}", body_encode([value: value] ++ options), [{"Content-Type", "application/x-www-form-urlencoded"}], [timeout: timeout] do
-  		HTTPoison.Response[status_code: code, body: body] when code in [200, 201] -> body |> JSON.decode!
+  		HTTPoison.Response[status_code: code, body: body] when code in [200, 201] -> body |> Jazz.decode!
   		HTTPoison.Response[status_code: 307] -> set path, value, options
       _ -> false
   	end
   end
   def set(path, value, options) do
-    set(path, JSON.encode!(value), options)
+    set(path, Jazz.encode!(value), options)
   end
 
   def wait(path, options \\ []) do 
@@ -69,14 +69,15 @@ defmodule Diamorfosi do
   end
 
 
-  def atomic(dataset_name, func) do
-    case Diamorfosi.set("/atoms/#{dataset_name}", JSON.encode!([processing: true]), [prevExist: false]) do
-      false -> {:error, dataset_name}
-      _set_result ->
-        result = func.()
-        Diamorfosi.set("/atoms/#{dataset_name}", JSON.encode!([processing: false]), [prevExist: true, ttl: 1])
-        result
+  defmacro serial(dataset_name, code) do
+    quote do
+      case Diamorfosi.set("/atoms/#{unquote(dataset_name)}", Jazz.encode!([processing: true]), [prevExist: false]) do
+        false -> {:error, unquote(dataset_name)}
+        _set_result ->
+          result = unquote(code)
+          Diamorfosi.set("/atoms/#{unquote(dataset_name)}", Jazz.encode!([processing: false]), [prevExist: true, ttl: 1])
+          result
+      end
     end
   end
-
-end
+end 

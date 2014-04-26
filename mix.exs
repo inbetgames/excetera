@@ -10,13 +10,17 @@ defmodule Diamorfosi.Mixfile do
   def application do
     [
       mod: { Diamorfosi, [] },
-      applications: [:httpoison, :jazz, :exlager]
+      applications: [:lax, :httpoison, :jazz, :exlager]
     ]
   end
 
   defp deps do
     [
-      {:httpoison, github: "edgurgel/httpoison"},
+      {:idna, github: "benoitc/erlang-idna", override: true},
+      {:hackney, github: "benoitc/hackney", override: true},
+      {:hackney_lib, github: "benoitc/hackney_lib", override: true},
+      {:lax, github: "d0rc/lax"},
+      {:httpoison, github: "d0rc/httpoison"},
       {:exactor, github: "sasa1977/exactor"},
       {:exlager, github: "khia/exlager"},
       {:jazz, github: "meh/jazz"}
