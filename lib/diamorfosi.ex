@@ -36,7 +36,7 @@ defmodule Diamorfosi do
   def get_with_details(path, options \\ []) do
   	timeout = Keyword.get options, :timeout, @timeout
   	case HTTPoison.get "#{@etcd}#{path}", [], [timeout: timeout] do
-  		HTTPoison.Response[status_code: 200, body: body] -> body |> Jazz.decode!
+  		%HTTPoison.Response{status_code: 200, body: body} -> body |> Jazz.decode!
   		_ -> false
   	end
   end
@@ -46,8 +46,8 @@ defmodule Diamorfosi do
   	timeout = Keyword.get options, :timeout, @timeout
   	options = Keyword.delete options, :timeout
   	case HTTPoison.request :put, "#{@etcd}#{path}", body_encode([value: value] ++ options), [{"Content-Type", "application/x-www-form-urlencoded"}], [timeout: timeout] do
-  		HTTPoison.Response[status_code: code, body: body] when code in [200, 201] -> body |> Jazz.decode!
-  		HTTPoison.Response[status_code: 307] -> set path, value, options
+  		%HTTPoison.Response{status_code: code, body: body} when code in [200, 201] -> body |> Jazz.decode!
+  		%HTTPoison.Response{status_code: 307} -> set path, value, options
       _ -> false
   	end
   end

@@ -7,8 +7,8 @@ defmodule DiamorfosiTest do
   end
 
   test "setting complex values" do
-  	Diamorfosi.set "/test", [{"some", "value"}]
-  	assert Diamorfosi.get("/test") == [{"some", "value"}]
+  	Diamorfosi.set "/test", %{"some" => "value"}
+  	assert Diamorfosi.get("/test") == %{"some" => "value"}
   end
 
   test "setting with TTL" do
