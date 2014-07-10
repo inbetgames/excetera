@@ -45,7 +45,10 @@ defmodule Diamorfosi do
     set(path, value |> :erlang.term_to_binary |> :base64.encode |> URI.encode_www_form)
   end
   def get_term(path) do
-    get(path) |> :base64.decode |> :erlang.binary_to_term
+    case get(path) do
+      false -> false
+      val -> val |> :base64.decode |> :erlang.binary_to_term
+    end
   end
 
   def set(path, value), do: set(path, value, [])
