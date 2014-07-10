@@ -41,6 +41,13 @@ defmodule Diamorfosi do
   	end
   end
   
+  def set_term(path, value) do
+    set(path, value |> :erlang.term_to_binary |> :base64.encode |> URI.encode_www_form)
+  end
+  def get_term(path) do
+    get(path) |> :base64.decode |> :erlang.binary_to_term
+  end
+
   def set(path, value), do: set(path, value, [])
   def set(path, value, options) when is_binary(value) do
   	timeout = Keyword.get options, :timeout, @timeout
