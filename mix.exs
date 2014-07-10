@@ -16,11 +16,8 @@ defmodule Diamorfosi.Mixfile do
 
   defp deps do
     [
-      {:idna, github: "benoitc/erlang-idna", override: true},
-      {:hackney, github: "benoitc/hackney", override: true},
-      {:hackney_lib, github: "benoitc/hackney_lib", override: true},
       {:lax, github: "d0rc/lax"},
-      {:httpoison, github: "d0rc/httpoison"},
+      {:httpoison, github: "edgurgel/httpoison"},
       {:exactor, github: "sasa1977/exactor"},
       {:exlager, github: "khia/exlager"},
       {:jazz, github: "meh/jazz"}

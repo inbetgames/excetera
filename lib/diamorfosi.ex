@@ -1,7 +1,7 @@
 import LAXer
 
 defmodule Diamorfosi do
-  use Application.Behaviour
+  use Application
 
   @etcd "http://my.host.name:8080/v2/keys"
   @timeout 5000

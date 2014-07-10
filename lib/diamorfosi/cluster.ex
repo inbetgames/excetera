@@ -1,5 +1,5 @@
 defmodule Diamorfosi.Cluster do
-	use GenServer.Behaviour
+	use GenServer
 
 	@startup_timeout	1000
 	@renew_timeout		5000
