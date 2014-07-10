@@ -7,14 +7,14 @@ defmodule DiamorfosiTest do
   end
 
   test "setting complex values" do
-  	Diamorfosi.set "/test", %{"some" => "value"}
-  	assert Diamorfosi.get("/test") == %{"some" => "value"}
+  	Diamorfosi.set "/test_complex", %{"some" => "value"}
+  	assert Diamorfosi.get("/test_complex") == %{"some" => "value"}
   end
 
   test "setting with TTL" do
-  	Diamorfosi.set "/test", "valuex", [ttl: 1]
+  	Diamorfosi.set "/test_ttl", "valuex", [ttl: 1]
   	:timer.sleep 1500
-  	assert Diamorfosi.get("/test") == false
+  	assert Diamorfosi.get("/test_ttl") == false
   end
 
   test "serializing works" do
