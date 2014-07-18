@@ -1,5 +1,3 @@
-import LAXer
-
 defmodule Diamorfosi do
   use Application
 
@@ -21,10 +19,11 @@ defmodule Diamorfosi do
     case get_with_details(path, options) do
       false -> false
       details ->
-        case la details["node"]["dir"] do
-          true -> la details["node"]["nodes"]
+        node = details["node"]
+        case node["dir"] do
+          true -> node["nodes"]
           nil ->
-            value = la details["node"]["value"]
+            value = node["value"]
             case Jazz.decode(value) do
               {:ok, json} -> json
               _ -> value

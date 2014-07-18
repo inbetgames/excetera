@@ -6,5 +6,4 @@
   "httpoison": {:git, "git://github.com/edgurgel/httpoison.git", "75970fc5a6ba0429b53f38bc466cf77d76674976", []},
   "idna": {:git, "git://github.com/benoitc/erlang-idna.git", "21aa158b7f36bf2a000f12fe40d7f21eece9cf65", [tag: "hackney-0.11.2"]},
   "jazz": {:git, "git://github.com/meh/jazz.git", "d88a861644113b8ba335ff6a54fb059519566365", []},
-  "lager": {:git, "https://github.com/basho/lager.git", "4d8291edb72a25ac0efde907e2ecaa115108ff90", []},
-  "lax": {:git, "git://github.com/d0rc/lax.git", "1fe4f435e80b93bb6fb8b1bb099b8d061eef7923", []}}
+  "lager": {:git, "https://github.com/basho/lager.git", "4d8291edb72a25ac0efde907e2ecaa115108ff90", []}}
