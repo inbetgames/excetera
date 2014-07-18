@@ -4,13 +4,15 @@ defmodule Diamorfosi.Mixfile do
   def project do
     [ app: :diamorfosi,
       version: "0.0.1",
+      elixir: "~> 0.14.0",
       deps: deps ]
   end
 
   def application do
     [
       mod: { Diamorfosi, [] },
-      applications: [:lax, :httpoison, :jazz, :exlager]
+      applications: [:lax, :httpoison, :jazz, :exlager],
+      env: [etcd_url: "http://127.0.0.1:4001/v2/keys"],
     ]
   end
 
