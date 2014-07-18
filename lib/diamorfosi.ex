@@ -1,20 +1,15 @@
 defmodule Diamorfosi do
   use Application
 
-  @timeout 5000
-
+  @doc false
   def start(_type, _args) do
     Diamorfosi.Supervisor.start_link
   end
 
-  defmacrop body_encode(list) do
-    quote do
-      for {key, value} <- unquote(list), into: "" do
-        "#{key}=#{value}&"
-      end
-    end
-  end
+  alias Diamorfosi.API
 
+  @doc """
+  """
   def get(path, options \\ []) do
     case get_with_details(path, options) do
       false -> false
@@ -33,10 +28,9 @@ defmodule Diamorfosi do
   end
 
   def get_with_details(path, options \\ []) do
-    timeout = Keyword.get options, :timeout, @timeout
-    case HTTPoison.get "#{etcd_url}#{path}", [], [timeout: timeout] do
-      %HTTPoison.Response{status_code: 200, body: body} -> body |> Jazz.decode!
-      _ -> false
+    case API.get(path, options) do
+      {:ok, value} -> value
+      :error -> false
     end
   end
 
@@ -52,12 +46,9 @@ defmodule Diamorfosi do
 
   def set(path, value), do: set(path, value, [])
   def set(path, value, options) when is_binary(value) do
-    timeout = Keyword.get options, :timeout, @timeout
-    options = Keyword.delete options, :timeout
-    case HTTPoison.request :put, "#{etcd_url}#{path}", body_encode([value: value] ++ options), [{"Content-Type", "application/x-www-form-urlencoded"}], [timeout: timeout] do
-      %HTTPoison.Response{status_code: code, body: body} when code in [200, 201] -> body |> Jazz.decode!
-      %HTTPoison.Response{status_code: 307} -> set path, value, options
-      _ -> false
+    case API.put(path, value, options) do
+      :ok -> :ok
+      :error -> false
     end
   end
   def set(path, value, options) do
@@ -89,6 +80,4 @@ defmodule Diamorfosi do
       end
     end
   end
-
-  defp etcd_url, do: Application.get_env(:diamorfosi, :etcd_url)
 end
