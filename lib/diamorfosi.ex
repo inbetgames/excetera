@@ -90,5 +90,5 @@ defmodule Diamorfosi do
     end
   end
 
-  def etcd_url, do: Application.get_env(:diamorfosi, :etcd_url)
+  defp etcd_url, do: Application.get_env(:diamorfosi, :etcd_url)
 end
