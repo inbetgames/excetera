@@ -19,7 +19,6 @@ defmodule Diamorfosi.Mixfile do
   defp deps do
     [
       {:httpoison, github: "edgurgel/httpoison"},
-      {:exactor, github: "sasa1977/exactor"},
       {:exlager, github: "khia/exlager"},
       {:jazz, github: "meh/jazz"}
     ]

@@ -21,14 +21,14 @@ defmodule Diamorfosi.Registry do
 end
 
 defmodule Diamorfosi.Registry.Worker do
-	use ExActor.GenServer
+  use GenServer
 	require Lager
 
 	def init(atomname) do
 		{:ok, %{atom: atomname}, 0}
 	end
 
-	definfo :timeout, state: state = %{atom: atomname} do
+	def handle_info(:timeout, %{atom: atomname}=state) do
 		Lager.info "Fetching new value for atom #{inspect atomname}"
 		{:noreply, state, 1000}
 	end
