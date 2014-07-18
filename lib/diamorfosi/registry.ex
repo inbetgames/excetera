@@ -1,13 +1,13 @@
 defmodule Diamorfosi.Registry do
-	def atom_open(atomname, default_value \\ nil) do
+	def atom_open(atomname, _default_value \\ nil) do
 		worker_name = "Diamorfosi.#{atomname}" |> :erlang.binary_to_atom(:utf8)
 		:supervisor.start_child(
-			Diamorfosi.Supervisor, 
+			Diamorfosi.Supervisor,
 			Supervisor.Behaviour.worker(Diamorfosi.Registry.Worker, [atomname], [worker_name])
 		)
 	end
 
-	def atom_close(atomname, delete \\ true) do
+	def atom_close(_atomname, _delete \\ true) do
 
 	end
 
