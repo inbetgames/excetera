@@ -1,11 +1,4 @@
 defmodule Diamorfosi do
-  use Application
-
-  @doc false
-  def start(_type, _args) do
-    Diamorfosi.Supervisor.start_link
-  end
-
   alias Diamorfosi.API
 
   @doc """
