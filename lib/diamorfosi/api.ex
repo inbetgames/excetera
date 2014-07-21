@@ -58,8 +58,9 @@ defmodule Diamorfosi.API do
 
   def delete("/"<>_=keypath, options) do
     {timeout, options} = Keyword.pop(options, :timeout, @default_timeout)
+    {recursive, options} = Keyword.pop(options, :recursive, false)
     headers = []
-    url = "#{etcd_url}#{keypath}"
+    url = "#{etcd_url}#{keypath}?recursive=#{recursive}"
 
     case HTTPoison.request(:delete, url, "", headers, [timeout: timeout]) do
       %HttpResp{status_code: 200, body: body} ->
