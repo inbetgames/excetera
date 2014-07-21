@@ -11,10 +11,26 @@ defmodule Diamorfosi.API do
     headers = []
     url = "#{etcd_url}#{keypath}"
 
+    #    case options[:waitIndex] do
+    #      nil ->
+    #        get("#{path}", options)
+    #        |> (fn reply ->
+    #          wait path, Keyword.update(options, :waitIndex, (reply["modifiedIndex"] + 1), &(&1))
+    #        end).()
+    #      value when is_integer(value) ->
+    #        options = Keyword.delete options, :waitIndex
+    #        get("#{path}?wait=true&waitIndex=#{value}", options)
+    #    end
+
     case HTTPoison.get(url, headers, [timeout: timeout]) do
       %HttpResp{status_code: 200, body: body} ->
         {:ok, body |> Jazz.decode!}
-      _ -> :error
+
+      %HttpResp{status_code: 404, body: _body} ->
+        {:error, :not_found}
+
+      _ ->
+        {:error, :unknown}
     end
   end
 
