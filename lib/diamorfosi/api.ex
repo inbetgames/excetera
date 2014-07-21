@@ -10,15 +10,10 @@ defmodule Diamorfosi.API do
     {recursive, options} = Keyword.pop(options, :recursive, nil)
     {sorted, options} = Keyword.pop(options, :sort, nil)
 
-    params =
-      [{"recursive", recursive}, {"sorted", sorted}]
-      |> Enum.reject(fn {_, val} -> val == nil end)
-      |> Enum.map(fn {name, val} -> "#{name}=#{val}" end)
-      |> Enum.join("&")
-    if params != "", do: params = "?" <> params
+    params = [{"recursive", recursive}, {"sorted", sorted}]
 
     headers = []
-    url = "#{etcd_url}#{keypath}#{params}"
+    url = "#{etcd_url}#{keypath}#{params_to_query_string(params)}"
 
     #    case options[:waitIndex] do
     #      nil ->
@@ -33,23 +28,24 @@ defmodule Diamorfosi.API do
 
     case HTTPoison.get(url, headers, [timeout: timeout]) do
       %HttpResp{status_code: 200, body: body} ->
-        {:ok, body |> Jazz.decode!}
+        {:ok, Jazz.decode!(body)}
 
-      %HttpResp{status_code: 404, body: _body} ->
-        {:error, :not_found}
-
-      _ ->
-        {:error, :unknown}
+      %HttpResp{status_code: status, body: body} ->
+        {:error, status, Jazz.decode!(body)}
     end
   end
 
   def put("/"<>_=keypath, value, options) do
     {timeout, options} = Keyword.pop(options, :timeout, @default_timeout)
     {return_body, options} = Keyword.pop(options, :return_body, false)
+    {dir, options} = Keyword.pop(options, :dir, nil)
+
+    params = [{"dir", dir}]
 
     headers = [{"Content-Type", "application/x-www-form-urlencoded"}]
-    url = "#{etcd_url}#{keypath}"
-    body = encode_body([value: value] ++ options)
+    url = "#{etcd_url}#{keypath}#{params_to_query_string(params)}"
+    unless dir, do: options = [value: value] ++ options
+    body = encode_body(options)
 
     case HTTPoison.request(:put, url, body, headers, [timeout: timeout]) do
       %HttpResp{status_code: code, body: body} when code in [200, 201] ->
@@ -61,7 +57,8 @@ defmodule Diamorfosi.API do
       %HttpResp{status_code: 307, headers: headers} ->
         IO.inspect headers
         put(keypath, value, options)
-      _ -> :error
+      %HttpResp{status_code: status, body: body} ->
+        {:error, status, Jazz.decode!(body)}
     end
   end
 
@@ -75,7 +72,8 @@ defmodule Diamorfosi.API do
     case HTTPoison.request(:post, url, body, headers, [timeout: timeout]) do
       %HttpResp{status_code: code, body: body} when code in [200, 201] ->
         {:ok, body |> Jazz.decode!}
-      _ -> :error
+      %HttpResp{status_code: status, body: body} ->
+        {:error, status, Jazz.decode!(body)}
     end
   end
 
@@ -88,12 +86,19 @@ defmodule Diamorfosi.API do
     case HTTPoison.request(:delete, url, "", headers, [timeout: timeout]) do
       %HttpResp{status_code: 200, body: body} ->
         :ok
-      %HttpResp{status_code: 404, body: _body} ->
-        {:error, :not_found}
-      _=other ->
-        IO.inspect other
-        {:error, :unknown}
+      %HttpResp{status_code: status, body: body} ->
+        {:error, status, Jazz.decode!(body)}
     end
+  end
+
+  defp params_to_query_string(params) do
+    params =
+      params
+      |> Enum.reject(fn {_, val} -> val == nil end)
+      |> Enum.map(fn {name, val} -> "#{name}=#{val}" end)
+      |> Enum.join("&")
+    if params != "", do: params = "?" <> params
+    params
   end
 
   defp encode_body(list) do

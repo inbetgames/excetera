@@ -41,7 +41,7 @@ defmodule Diamorfosi do
   # options: [type: fn(x) -> ... end]
   def fetch(path, options \\ []) do
     case API.get(path, options) do
-      {:error, _reason}=error -> error
+      {:error, _, reason} -> {:error, reason}
       {:ok, value} -> process_api_value(value, options)
     end
   end
@@ -72,7 +72,7 @@ defmodule Diamorfosi do
     api_val = encode_value(value, Keyword.get(options, :type, :str))
     case API.put(path, api_val, options) do
       :ok -> :ok
-      :error -> :error
+      {:error, _, reason} -> {:error, reason}
     end
   end
 
@@ -95,7 +95,7 @@ defmodule Diamorfosi do
     api_val = encode_value(value, Keyword.get(options, :type, :str))
     case API.post(path, api_val, options) do
       {:ok, %{"node" => %{"key" => key}}} -> {:ok, trunc_key(key)}
-      :error -> :error
+      {:error, _, reason} -> {:error, reason}
     end
   end
 
@@ -123,11 +123,11 @@ defmodule Diamorfosi do
              https://coreos.com/docs/distributed-configuration/etcd-api/#toc_16
   """
   # options: [condition: %{...}]  # compareAndDelete
-  # options: [dir: true]
+  # options: [recursive: true]
   def delete(path, options \\ []) do
     case API.delete(path, options) do
       {:ok, _value} -> :ok
-      {:error, _reason}=error -> error
+      {:error, _, %{"message" => message}} -> {:error, message}
     end
   end
 
@@ -137,9 +137,10 @@ defmodule Diamorfosi do
   Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_14
   """
   def mkdir(path, options \\ []) do
-    case API.put(path, [dir: true] ++ options) do
-      {:ok, _value} -> :ok
-      {:error, _reason}=error -> error
+    case API.put(path, nil, [dir: true] ++ options) do
+      :ok -> :ok
+      {:error, 403, _} -> {:error, "Key already exists"}
+      {:error, _, %{"message" => message}} -> {:error, message}
     end
   end
 
@@ -154,8 +155,8 @@ defmodule Diamorfosi do
     case API.get(path, options) do
       {:ok, %{"node" => %{"dir" => true}=node}} ->
         {:ok, process_dir_listing(node["nodes"], options)}
-      {:ok, _} -> {:error, :not_a_dir}
-      {:error, _reason}=error -> error
+      {:ok, _} -> {:error, "Not a directory"}
+      {:error, _, %{"message" => message}} -> {:error, message}
     end
   end
 
