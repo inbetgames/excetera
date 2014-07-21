@@ -8,6 +8,8 @@ defmodule Diamorfosi do
 
   If `path` points to a directory, it will return its contents (if `list: true`
   option is passed) or raise.
+
+  Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_5
   """
   # options: [timeout: ..., type: ...]
   def get(path, default, options \\ []) do
@@ -57,6 +59,11 @@ defmodule Diamorfosi do
   end
 
   @doc """
+  Set the value for key at `path`.
+
+  ## Options
+
+  Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_3
   """
   # options: [type: :num]
   # options: [condition: %{...}, update: true]  # compareAndSwap
@@ -111,6 +118,9 @@ defmodule Diamorfosi do
 
   If `path` points to a directory, removes it if `recursive: true` options is
   passed, otherwise returns `{:error, :is_dir}`.
+
+  Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_7,
+             https://coreos.com/docs/distributed-configuration/etcd-api/#toc_16
   """
   # options: [condition: %{...}]  # compareAndDelete
   # options: [dir: true]
@@ -123,6 +133,8 @@ defmodule Diamorfosi do
 
   @doc """
   Create a new directory at `path`.
+
+  Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_14
   """
   def mkdir(path, options \\ []) do
     case API.put(path, [dir: true] ++ options) do
@@ -135,6 +147,8 @@ defmodule Diamorfosi do
   List directory contents at `path`.
 
   recursive: true
+
+  Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_15
   """
   def lsdir(path, options) do
     case API.get(path, options) do
@@ -145,6 +159,8 @@ defmodule Diamorfosi do
 
   @doc """
   Wait for the value at `path` to change.
+
+  Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_9
   """
   def wait(path, options \\ []) do
     case API.get(path, [wait: true] ++ options) do
