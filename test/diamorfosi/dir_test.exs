@@ -25,4 +25,23 @@ defmodule DiamorfosiTest.DirTest do
     assert Diamorfosi.lsdir("/dir_test/dir", recursive: true) ==
            {:ok, %{"b" => "2", "c" => "3", "d" => %{"e" => "4", "f" => "5"}}}
   end
+
+  test "in-order keys" do
+    key1 = Diamorfosi.put! "/dir_test/ord", "hello"
+    key2 = Diamorfosi.put! "/dir_test/ord", "world"
+    key3 = Diamorfosi.put! "/dir_test/ord/sub", "it's"
+    key4 = Diamorfosi.put! "/dir_test/ord/sub", "me"
+
+    map = [{key1, "hello"}, {key2, "world"}, {"sub", %{}}] |> Enum.into(%{})
+    assert Diamorfosi.lsdir("/dir_test/ord") == {:ok, map}
+
+    listing = [{key1, "hello"}, {key2, "world"}, {"sub", []}]
+    assert Diamorfosi.lsdir("/dir_test/ord", sort: true) == {:ok, listing}
+
+    rec_listing = [
+      {key1, "hello"}, {key2, "world"}, {"sub", [{key3, "it's"}, {key4, "me"}]}
+    ]
+    assert Diamorfosi.lsdir("/dir_test/ord", sort: true, recursive: true) ==
+           {:ok, rec_listing}
+  end
 end

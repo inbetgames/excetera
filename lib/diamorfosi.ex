@@ -94,7 +94,7 @@ defmodule Diamorfosi do
   def put(path, value, options \\ []) do
     api_val = encode_value(value, Keyword.get(options, :type, :str))
     case API.post(path, api_val, options) do
-      :ok -> :ok
+      {:ok, %{"node" => %{"key" => key}}} -> {:ok, trunc_key(key)}
       :error -> :error
     end
   end
@@ -153,7 +153,7 @@ defmodule Diamorfosi do
   def lsdir(path, options \\ []) do
     case API.get(path, options) do
       {:ok, %{"node" => %{"dir" => true}=node}} ->
-        {:ok, process_dir_listing(node["nodes"], options[:recursive])}
+        {:ok, process_dir_listing(node["nodes"], options)}
       {:ok, _} -> {:error, :not_a_dir}
       {:error, _reason}=error -> error
     end
@@ -189,7 +189,7 @@ defmodule Diamorfosi do
   defp process_api_value(value, options) do
     node = value["node"]
     case {node["dir"], Keyword.get(options, :list, false)} do
-      {true, true} -> {:ok, process_dir_listing(node["nodes"], options[:recursive])}
+      {true, true} -> {:ok, process_dir_listing(node["nodes"], options)}
       {true, false} -> {:error, :is_dir}
       {nil, _} -> decode_api_node(node, options)
     end
@@ -205,19 +205,21 @@ defmodule Diamorfosi do
     end
   end
 
-  defp process_dir_listing(nodes, recursive) do
-    Enum.reduce(nodes, %{}, fn
-      %{"key" => key, "dir" => true}=node, map ->
-        value = if recursive do
-          process_dir_listing(node["nodes"], true)
+  defp process_dir_listing(nodes, options) do
+    list = Enum.reduce(nodes, [], fn
+      %{"key" => key, "dir" => true}=node, acc ->
+        value = if options[:recursive] do
+          process_dir_listing(node["nodes"], options)
         else
-          %{}
+          # FIXME: these defaults might not be the best choice
+          if options[:sort], do: [], else: %{}
         end
-        Map.put(map, trunc_key(key), value)
+        [{trunc_key(key), value}|acc]
 
-      %{"key" => key, "value" => value}, map ->
-        Map.put(map, trunc_key(key), value)
+      %{"key" => key, "value" => value}, acc ->
+        [{trunc_key(key), value}|acc]
     end)
+    if options[:sort], do: Enum.reverse(list), else: Enum.into(list, %{})
   end
 
   defp trunc_key(key) do
