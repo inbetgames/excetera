@@ -56,6 +56,22 @@ defmodule Diamorfosi.API do
     end
   end
 
+  def delete("/"<>_=keypath, options) do
+    {timeout, options} = Keyword.pop(options, :timeout, @default_timeout)
+    headers = []
+    url = "#{etcd_url}#{keypath}"
+
+    case HTTPoison.request(:delete, url, "", headers, [timeout: timeout]) do
+      %HttpResp{status_code: 200, body: body} ->
+        :ok
+      %HttpResp{status_code: 404, body: _body} ->
+        {:error, :not_found}
+      _=other ->
+        IO.inspect other
+        {:error, :unknown}
+    end
+  end
+
   defp encode_body(list) do
     list
     |> Enum.map(fn {key, val} -> "#{key}=#{val}" end)
