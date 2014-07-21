@@ -77,6 +77,32 @@ defmodule Diamorfosi do
   end
 
   @doc """
+  Creates a new key in directory at `path` in order.
+
+  Returns `{:ok, <key>}` with the new key in case of success or `{:error,
+  <reason>}` in case of failure.
+
+  Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_10
+  """
+  def put(path, value, options \\ []) do
+    api_val = encode_value(value, Keyword.get(options, :type, :str))
+    case API.post(path, api_val, options) do
+      :ok -> :ok
+      :error -> :error
+    end
+  end
+
+  @doc """
+  Same as `put/3` except it returns just `<key>` or raises.
+  """
+  def put!(path, value, options \\ []) do
+    case put(path, value, options) do
+      {:ok, key} -> key
+      {:error, reason} -> raise Diamorfosi.KeyError, message: inspect(reason)
+    end
+  end
+
+  @doc """
   Delete the value at `path`.
 
   Returns `:ok` in case of success.
