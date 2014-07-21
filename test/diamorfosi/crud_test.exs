@@ -4,13 +4,28 @@ defmodule DiamorfosiTest.CrudTest do
   import DiamorfosiTest.Helpers
 
   setup_all do
-    on_exit fn -> cleanup("/crud_test") end
     cleanup("/crud_test")
   end
 
-  test "setting values" do
-    Diamorfosi.set "/crud_test", "A node"
-    assert Diamorfosi.fetch!("/crud_test") == "A node"
+  setup do
+    on_exit fn -> cleanup("/crud_test") end
+  end
+
+  test "setting and getting values" do
+    Diamorfosi.set "/crud_test/a", "A node"
+    Diamorfosi.set "/crud_test/dir/b", "B node"
+    assert Diamorfosi.fetch("/crud_test/a") == {:ok, "A node"}
+    assert Diamorfosi.fetch!("/crud_test/dir/b") == "B node"
+    assert Diamorfosi.get("/crud_test/dir/b", :def) == "B node"
+    assert Diamorfosi.get("/crud_test/dir/c", :def) == :def
+  end
+
+  test "implicit dir" do
+    Diamorfosi.set "/crud_test/dir/a", "A node"
+    Diamorfosi.set "/crud_test/dir/b", "B node"
+    assert Diamorfosi.fetch("/crud_test/dir") == {:error, :is_dir}
+    assert Diamorfosi.fetch("/crud_test/dir", list: true) ==
+           {:ok, %{"a" => "A node", "b" => "B node"}}
   end
 
   test "setting complex values" do

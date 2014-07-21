@@ -16,7 +16,7 @@ defmodule Diamorfosi do
     case fetch(path, options) do
       {:ok, value} -> value
       {:error, :is_dir} -> raise Diamorfosi.KeyError, message: "Tried to fetch a directory"
-      {:error, reason} -> default
+      {:error, _reason} -> default
     end
   end
 
@@ -150,9 +150,11 @@ defmodule Diamorfosi do
 
   Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_15
   """
-  def lsdir(path, options) do
+  def lsdir(path, options \\ []) do
     case API.get(path, options) do
-      {:ok, value} -> process_dir_listing(value, options)
+      {:ok, %{"node" => %{"dir" => true}=node}} ->
+        {:ok, process_dir_listing(node["nodes"], options[:recursive])}
+      {:ok, _} -> {:error, :not_a_dir}
       {:error, _reason}=error -> error
     end
   end
@@ -187,7 +189,7 @@ defmodule Diamorfosi do
   defp process_api_value(value, options) do
     node = value["node"]
     case {node["dir"], Keyword.get(options, :list, false)} do
-      {true, true} -> node["nodes"]
+      {true, true} -> {:ok, process_dir_listing(node["nodes"], options[:recursive])}
       {true, false} -> {:error, :is_dir}
       {nil, _} -> decode_api_node(node, options)
     end
@@ -203,7 +205,24 @@ defmodule Diamorfosi do
     end
   end
 
-  defp process_dir_listing(value, options) do
+  defp process_dir_listing(nodes, recursive) do
+    Enum.reduce(nodes, %{}, fn
+      %{"key" => key, "dir" => true}=node, map ->
+        value = if recursive do
+          process_dir_listing(node["nodes"], true)
+        else
+          %{}
+        end
+        Map.put(map, trunc_key(key), value)
+
+      %{"key" => key, "value" => value}, map ->
+        Map.put(map, trunc_key(key), value)
+    end)
+  end
+
+  defp trunc_key(key) do
+    [_, last] = Regex.run(~r"/([^/]+)$", key)
+    last
   end
 
   # These 2 functions implement a trick to make it possible to define

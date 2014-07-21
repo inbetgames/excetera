@@ -7,9 +7,10 @@ defmodule Diamorfosi.API do
 
   def get("/"<>_=keypath, options) do
     timeout = Keyword.get(options, :timeout, @default_timeout)
+    {recursive, options} = Keyword.pop(options, :recursive, false)
 
     headers = []
-    url = "#{etcd_url}#{keypath}"
+    url = "#{etcd_url}#{keypath}?recursive=#{recursive}"
 
     #    case options[:waitIndex] do
     #      nil ->
