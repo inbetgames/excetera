@@ -1,6 +1,11 @@
 defmodule DiamorfosiTest.ApiTest do
   use ExUnit.Case
 
+  # The purpose of the tests in this module is partially educational – to get
+  # familiar with etcd API. In case it changes in the future, it'll probably be
+  # more efficient to update tests in CrudTest and remove failing tests from
+  # here.
+
   import DiamorfosiTest.Helpers
   alias Diamorfosi.API
 
@@ -13,7 +18,7 @@ defmodule DiamorfosiTest.ApiTest do
   end
 
   test "get bad option" do
-    API.put("/api_test/a", "hello", [])
+    {:ok, _} = API.put("/api_test/a", "hello", [])
     assert {:ok, %{"action" => "get"}} = API.get("/api_test/a", [donut: false])
 
     #assert_raise Diamorfosi.OptionError, "Bad option: {:donut, false}", fn ->
@@ -26,7 +31,7 @@ defmodule DiamorfosiTest.ApiTest do
            = API.get("/api_test", [])
     assert {:error, 404, nil} = API.get("/api_test", [], decode_body: false)
 
-    API.put("/api_test/a", "hello", [])
+    {:ok, _} = API.put("/api_test/a", "hello", [])
 
     assert {:ok, %{"action" => "get", "node" => %{}}} = API.get("/api_test/a", [])
     assert {:ok, nil} = API.get("/api_test/a", [], decode_body: false)
@@ -34,12 +39,78 @@ defmodule DiamorfosiTest.ApiTest do
            = API.get("/api_test", [])
   end
 
-  test "wait" do
+  test "wait delete" do
+    pid = self()
+
+    # FIXME: set default timeout to a small value to test that waiting is not
+    # affected by it
+
+    spawn(fn ->
+      send(pid, {:done_waiting, API.get("/api_test/a/b", wait: true)})
+    end)
+    refute_receive _
+
+    {:ok, _} = API.put("/api_test/a", "...", [])
+    refute_receive _
+
+    {:ok, _} = API.put("/api_test/a", nil, dir: true)
+    {:ok, _} = API.put("/api_test/a/b/c", "...", [])
+    refute_receive _
+
+    {:ok, _} = API.delete("/api_test/a/b", recursive: true)
+    assert_receive {:done_waiting, {:ok, %{"action" => "delete", "node" => %{"key" => "/api_test/a/b", "dir" => true}}}}
+  end
+
+  test "wait set" do
+    pid = self()
+
+    spawn(fn ->
+      send(pid, {:done_waiting, API.get("/api_test/a/b", wait: true)})
+    end)
+    refute_receive _
+
+    {:ok, _} = API.put("/api_test/a/b", "done", [])
+    assert_receive {:done_waiting, {:ok, %{"action" => "set", "node" => %{"key" => "/api_test/a/b", "value" => "done"}}}}
+  end
+
+  test "wait set dir" do
+    pid = self()
+
+    spawn(fn ->
+      send(pid, {:done_waiting, API.get("/api_test/a/b", wait: true)})
+    end)
+    refute_receive _
+
+    {:ok, _} = API.put("/api_test/a/b", nil, dir: true)
+    assert_receive {:done_waiting, {:ok, %{"action" => "set", "node" => %{"key" => "/api_test/a/b", "dir" => true}}}}
+  end
+
+  test "recursive wait" do
+    pid = self()
+
+    spawn(fn ->
+      send(pid, {:done_waiting, API.get("/api_test/a", wait: true, recursive: true)})
+    end)
+    refute_receive _
+
+    {:ok, _} = API.put("/api_test/a/b/c", "1", [])
+    assert_receive {:done_waiting, {:ok, %{"action" => "set", "node" => %{"key" => "/api_test/a/b/c", "value" => "1"}}}}
+  end
+
+  test "wait index" do
+    {:ok, %{"node" => %{"createdIndex" => index}}} = API.put("/api_test/a", "hi", [])
+
+    assert {:ok, %{"action" => "set", "node" => %{"key" => "/api_test/a", "value" => "hi"}}}
+           = API.get("/api_test/a", wait: true, waitIndex: index)
   end
 
   test "put file and dir" do
     assert {:ok, %{"action" => "set", "node" => %{"value" => "hello"}}}
            = API.put("/api_test/a", "hello", [])
+    assert {:error, _, %{"message" => "Not a directory"}}
+           = API.put("/api_test/a/b", "...", [])
+    assert {:error, _, %{"message" => "Not a directory"}}
+           = API.put("/api_test/a/b", nil, dir: true)
     assert {:ok, %{"action" => "set", "node" => %{"dir" => true}, "prevNode" => %{"value" => "hello"}}}
            = API.put("/api_test/a", nil, dir: true)
 
@@ -64,5 +135,8 @@ defmodule DiamorfosiTest.ApiTest do
   end
 
   test "delete dir" do
+  end
+
+  test "time to live" do
   end
 end
