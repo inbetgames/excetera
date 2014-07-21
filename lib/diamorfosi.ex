@@ -136,7 +136,7 @@ defmodule Diamorfosi do
   # options: [recursive: true]
   def delete(path, options \\ []) do
     case API.delete(path, options) do
-      :ok -> :ok
+      {:ok, _} -> :ok
       {:error, _, %{"message" => message}} -> {:error, message}
     end
   end
@@ -148,7 +148,7 @@ defmodule Diamorfosi do
   """
   def mkdir(path, options \\ []) do
     case API.put(path, nil, [dir: true] ++ options) do
-      :ok -> :ok
+      {:ok, _} -> :ok
       {:error, 403, _} -> {:error, "Key already exists"}
       {:error, _, %{"message" => message}} -> {:error, message}
     end
@@ -175,7 +175,7 @@ defmodule Diamorfosi do
   """
   def rmdir(path, options \\ []) do
     case API.delete(path, [dir: true]++options) do
-      :ok -> :ok
+      {:ok, _} -> :ok
       {:error, _, %{"message" => message}} -> {:error, message}
     end
   end
