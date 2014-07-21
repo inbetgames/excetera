@@ -126,7 +126,7 @@ defmodule Diamorfosi do
   # options: [recursive: true]
   def delete(path, options \\ []) do
     case API.delete(path, options) do
-      {:ok, _value} -> :ok
+      :ok -> :ok
       {:error, _, %{"message" => message}} -> {:error, message}
     end
   end
@@ -156,6 +156,16 @@ defmodule Diamorfosi do
       {:ok, %{"node" => %{"dir" => true}=node}} ->
         {:ok, process_dir_listing(node["nodes"], options)}
       {:ok, _} -> {:error, "Not a directory"}
+      {:error, _, %{"message" => message}} -> {:error, message}
+    end
+  end
+
+  @doc """
+  Remove an empty directory at `path`.
+  """
+  def rmdir(path, options \\ []) do
+    case API.delete(path, [dir: true]++options) do
+      :ok -> :ok
       {:error, _, %{"message" => message}} -> {:error, message}
     end
   end

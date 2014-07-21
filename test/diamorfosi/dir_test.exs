@@ -53,5 +53,21 @@ defmodule DiamorfosiTest.DirTest do
 
     assert :ok = Diamorfosi.mkdir("/dir_test/dir")
     assert {:error, "Key already exists"} = Diamorfosi.mkdir("/dir_test/dir")
+
+    assert {:error, "Not a file"} = Diamorfosi.delete("/dir_test/dir")
+    assert :ok = Diamorfosi.rmdir("/dir_test/dir")
+
+    Diamorfosi.set "/dir_test/a/b", "hi"
+
+    assert {:error, "Not a file"} = Diamorfosi.delete("/dir_test/a")
+    assert {:error, "Directory not empty"} = Diamorfosi.rmdir("/dir_test/a")
+
+    assert :ok = Diamorfosi.delete("/dir_test/a", recursive: true)
+    assert Diamorfosi.lsdir("/dir_test/a") == {:error, "Key not found"}
+
+    Diamorfosi.set "/dir_test/a/b", "hi"
+    assert Diamorfosi.fetch!("/dir_test/a/b") == "hi"
+    assert :ok = Diamorfosi.rmdir("/dir_test/a", recursive: true)
+    assert Diamorfosi.lsdir("/dir_test/a") == {:error, "Key not found"}
   end
 end
