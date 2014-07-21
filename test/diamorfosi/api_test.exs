@@ -104,6 +104,14 @@ defmodule DiamorfosiTest.ApiTest do
            = API.get("/api_test/a", wait: true, waitIndex: index)
   end
 
+  test "put bad option" do
+    {:ok, %{"action" => "set"}} = API.put("/api_test/a", "hello", [donut: false])
+
+    #assert_raise Diamorfosi.OptionError, "Bad option: {:donut, false}", fn ->
+    #  API.put("/api_test/a", "", [], donut: false)
+    #end
+  end
+
   test "put file and dir" do
     assert {:ok, %{"action" => "set", "node" => %{"value" => "hello"}}}
            = API.put("/api_test/a", "hello", [])
@@ -119,10 +127,28 @@ defmodule DiamorfosiTest.ApiTest do
     assert {:ok, %{"node" => %{"value" => "hello"}}} = API.get("/api_test/a/b/c", [])
   end
 
-  test "put prevIndex" do
-  end
-
   test "compare and swap" do
+    {:ok, %{"node" => %{"createdIndex" => index}}} = API.put("/api_test/a", "hello", [])
+    assert {:error, _, %{"message" => "Compare failed"}}
+           = API.put("/api_test/a", "bye", [prevIndex: index+1])
+    assert {:error, _, %{"message" => "Compare failed"}}
+           = API.put("/api_test/a", "bye", [prevIndex: index-1])
+    assert {:ok, %{"action" => "compareAndSwap", "node" => %{"value" => "bye"}}}
+           = API.put("/api_test/a", "bye", [prevIndex: index])
+
+    assert {:error, 404, %{"message" => "Key not found"}}
+           = API.put("/api_test/b", "...", [prevValue: "hello"])
+    assert {:error, _, %{"message" => "Compare failed"}}
+           = API.put("/api_test/a", "...", [prevValue: "hello"])
+    assert {:ok, %{"action" => "compareAndSwap", "node" => %{"value" => "..."}}}
+           = API.put("/api_test/a", "...", [prevValue: "bye"])
+
+    assert {:error, 404, %{"message" => "Key not found"}}
+           = API.put("/api_test/b", "ok", [prevExist: true])
+    assert {:ok, %{"action" => "create", "node" => %{"value" => "ok"}}}
+           = API.put("/api_test/b", "ok", [prevExist: false])
+    assert {:ok, %{"action" => "update", "node" => %{"value" => "ko"}}}
+           = API.put("/api_test/b", "ko", [prevExist: true])
   end
 
   test "compare and delete" do
