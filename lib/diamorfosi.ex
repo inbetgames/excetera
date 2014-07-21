@@ -40,8 +40,13 @@ defmodule Diamorfosi do
   # options: [type: :int, timeout: ...]
   # options: [type: fn(x) -> ... end]
   def fetch(path, options \\ []) do
-    case API.get(path, options) do
-      {:error, _, reason} -> {:error, reason}
+    {api_options, options} = Enum.partition(options, fn {name, _} -> name in [:dir] end)
+    {api_options, options} = case Keyword.pop(options, :condition, nil) do
+      {nil, options} -> {api_options, options}
+      {condition, options} -> {condition ++ api_options, options}
+    end
+    case API.get(path, api_options, options) do
+      {:error, _, %{"message" => message}} -> {:error, message}
       {:ok, value} -> process_api_value(value, options)
     end
   end
@@ -67,12 +72,17 @@ defmodule Diamorfosi do
   """
   # options: [type: :num]
   # options: [condition: %{...}, update: true]  # compareAndSwap
-  # options: [in_order: true]
   def set(path, value, options \\ []) do
-    api_val = encode_value(value, Keyword.get(options, :type, :str))
-    case API.put(path, api_val, options) do
-      :ok -> :ok
-      {:error, _, reason} -> {:error, reason}
+    {api_options, options} = Enum.partition(options, fn {name, _} -> name in [:ttl] end)
+    {api_options, options} = case Keyword.pop(options, :condition, nil) do
+      {nil, options} -> {api_options, options}
+      {condition, options} -> {condition ++ api_options, options}
+    end
+    {type, options} = Keyword.pop(options, :type, :str)
+    api_val = encode_value(value, type)
+    case API.put(path, api_val, api_options, options) do
+      {:ok, _} -> :ok
+      {:error, _, %{"message" => message}} -> {:error, message}
     end
   end
 
