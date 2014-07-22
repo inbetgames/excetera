@@ -27,6 +27,21 @@ defmodule DiamorfosiTest.DirTest do
            {:ok, %{"b" => "2", "c" => "3", "d" => %{"e" => "4", "f" => "5"}}}
   end
 
+  test "put dir" do
+    assert Diamorfosi.fetch("/dir_test/ord") == {:error, "Key not found"}
+
+    {:ok, key1} = Diamorfosi.put "/dir_test/ord", "hello"
+    key2 = Diamorfosi.put! "/dir_test/ord", "world"
+
+    assert {:error, "Not a directory"} = Diamorfosi.put "/dir_test/ord/"<>key1, "hi"
+    assert_raise Diamorfosi.KeyError, "put /dir_test/ord/#{key2}: Not a directory", fn ->
+      Diamorfosi.put! "/dir_test/ord/"<>key2, "hi"
+    end
+
+    assert "hello" = Diamorfosi.fetch!("/dir_test/ord/"<>key1)
+    assert "world" = Diamorfosi.fetch!("/dir_test/ord/"<>key2)
+  end
+
   test "in-order keys" do
     assert Diamorfosi.lsdir("/dir_test/ord") == {:error, "Key not found"}
 

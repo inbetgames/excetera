@@ -64,9 +64,9 @@ defmodule Diamorfosi.API do
 
     case HTTPoison.request(:post, url, body, headers, [timeout: timeout]) do
       %HttpResp{status_code: code, body: body} when code in [200, 201] ->
-        {:ok, body |> Jazz.decode!}
+        {:ok, decode_body(:ok, body, options)}
       %HttpResp{status_code: status, body: body} ->
-        {:error, status, Jazz.decode!(body)}
+        {:error, status, decode_body(:error, body, options)}
     end
   end
 
