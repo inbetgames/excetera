@@ -36,11 +36,11 @@ defmodule Diamorfosi.API do
 
     headers = [{"Content-Type", "application/x-www-form-urlencoded"}]
     url = "#{etcd_url}#{keypath}#{params_to_query_string(api_options)}"
-    body = if api_options[:dir] do
-      ""
-    else
-      "value=#{value}"
-    end
+
+    {ttl, api_options} = Keyword.pop(api_options, :ttl, nil)
+    if api_options[:dir], do: value = nil
+    body_params = [value: value, ttl: ttl] |> Enum.reject(fn {_, x} -> x == nil end)
+    body = params_to_query_string(body_params, false)
 
     case HTTPoison.request(:put, url, body, headers, [timeout: timeout]) do
       %HttpResp{status_code: code, body: body} when code in [200, 201] ->
@@ -84,13 +84,13 @@ defmodule Diamorfosi.API do
     end
   end
 
-  defp params_to_query_string(params) do
+  defp params_to_query_string(params, prepend_q \\ true) do
     params =
       params
       |> Enum.reject(fn {_, val} -> val == nil end)
       |> Enum.map(fn {name, val} -> "#{name}=#{val}" end)
       |> Enum.join("&")
-    if params != "", do: params = "?" <> params
+    if params != "" and prepend_q, do: params = "?" <> params
     params
   end
 

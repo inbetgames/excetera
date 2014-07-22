@@ -1,4 +1,4 @@
-ExUnit.start
+ExUnit.start exclude: [:slowpoke]
 
 defmodule DiamorfosiTest.Helpers do
   def cleanup(root) do

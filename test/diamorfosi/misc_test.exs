@@ -29,4 +29,21 @@ defmodule DiamorfosiTest.MiscTest do
     assert :ok = Diamorfosi.delete("/misc_test/a/b", condition: [prevValue: "1"])
     assert {:error, "Key not found"} = Diamorfosi.fetch("/misc_test/a/b")
   end
+
+  @tag :slowpoke
+  test "setting with TTL" do
+    :ok = Diamorfosi.set "/crud_test_ttl", "valuex", [ttl: 1]
+    :timer.sleep 1500
+    assert Diamorfosi.get("/crud_test_ttl", false) == false
+  end
+
+  @tag :slowpoke
+  test "directory ttl" do
+    :ok = Diamorfosi.mkdir("/api_test/a", [ttl: 1])
+    assert {:ok, key1} = Diamorfosi.put("/api_test/a", "1")
+    assert "1" = Diamorfosi.fetch!("/api_test/a/#{key1}")
+    :timer.sleep(1500)
+    assert {:error, "Key not found"} = Diamorfosi.fetch("/api_test/a/#{key1}")
+    assert {:error, "Key not found"} = Diamorfosi.fetch("/api_test/a")
+  end
 end

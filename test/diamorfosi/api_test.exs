@@ -207,6 +207,20 @@ defmodule DiamorfosiTest.ApiTest do
     assert {:error, 404, _} = API.get("/api_test/a", [])
   end
 
+  @tag :slowpoke
   test "time to live" do
+    {:ok, _} = API.put("/api_test/a", "1", [ttl: 1])
+    assert {:ok, _} = API.get("/api_test/a", [])
+    :timer.sleep(1500)
+    assert {:error, 404, _} = API.get("/api_test/a", [])
+  end
+
+  @tag :slowpoke
+  test "unset ttl" do
+    {:ok, _} = API.put("/api_test/a", "1", [ttl: 1])
+    assert {:ok, _} = API.get("/api_test/a", [])
+    assert {:ok, _} = API.put("/api_test/a", "2", [])
+    :timer.sleep(1500)
+    assert {:ok, %{"node" => %{"value" => "2"}}} = API.get("/api_test/a", [])
   end
 end

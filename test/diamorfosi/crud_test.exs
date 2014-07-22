@@ -48,11 +48,4 @@ defmodule DiamorfosiTest.CrudTest do
     :ok = Diamorfosi.set "/crud_test_complex", %{some: "value"}, type: :json
     assert Diamorfosi.fetch!("/crud_test_complex", type: :json) == %{"some" => "value"}
   end
-
-  test "setting with TTL" do
-    # FIXME: set smaller timeout value
-    :ok = Diamorfosi.set "/crud_test_ttl", "valuex", [ttl: 1]
-    :timer.sleep 1500
-    assert Diamorfosi.get("/crud_test_ttl", false) == false
-  end
 end
