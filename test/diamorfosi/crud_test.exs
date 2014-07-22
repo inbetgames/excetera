@@ -13,7 +13,7 @@ defmodule DiamorfosiTest.CrudTest do
 
   test "setting and getting values" do
     :ok = Diamorfosi.set "/crud_test/a", "A node"
-    :ok = Diamorfosi.set "/crud_test/dir/b", "B node"
+    :ok = Diamorfosi.set! "/crud_test/dir/b", "B node"
     assert Diamorfosi.fetch("/crud_test/a") == {:ok, "A node"}
     assert Diamorfosi.fetch!("/crud_test/dir/b") == "B node"
     assert Diamorfosi.get("/crud_test/dir/b", :def) == "B node"
@@ -34,6 +34,14 @@ defmodule DiamorfosiTest.CrudTest do
       Diamorfosi.get("/crud_test/dir", nil)
     end
     assert %{"a" => "A node", "b" => "B node"} = Diamorfosi.get("/crud_test/dir", nil, dir: true)
+  end
+
+  test "set directory" do
+    :ok = Diamorfosi.set "/crud_test/dir/a", "A node"
+    assert {:error, "Not a file"} = Diamorfosi.set("/crud_test/dir", "value")
+    assert_raise Diamorfosi.KeyError, "set /crud_test/dir: Not a file", fn ->
+      Diamorfosi.set!("/crud_test/dir", "value")
+    end
   end
 
   test "delete" do
@@ -66,9 +74,9 @@ defmodule DiamorfosiTest.CrudTest do
   end
 
   test "setting terms" do
-    value = %{some: "value", with: {:a, 'tuple'}}
+    value = %{some: "value", with: {:a, 0.13, 'tuple'}}
     :ok = Diamorfosi.set_term "/crud_test/term", value
-    assert Diamorfosi.get_term("/crud_test/term", nil) == value
-    assert Diamorfosi.fetch!("/crud_test/term", type: :term) == value
+    assert Diamorfosi.get_term("/crud_test/term", nil) === value
+    assert Diamorfosi.fetch!("/crud_test/term", type: :term) === value
   end
 end

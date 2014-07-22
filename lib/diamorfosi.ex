@@ -40,8 +40,8 @@ defmodule Diamorfosi do
   Get the value at `path` and return `{:ok, <value>}` or `{:error, <reason>}`.
 
   If `type: <type>` option is passed, it will try to parse the value and will
-  return `{:error, "Failed to parse <value> as <type>"}` in case of failure. By
-  default, the argument is interpreted as a string and returned as is.
+  raise `Diamorfosi.ValueError` in case of failure. By default, the argument is
+  interpreted as a string and returned as is.
 
   If `path` points to a directory, `{:error, "Not a file"}` will be returned
   unless `dir: true` option is passed.
@@ -64,7 +64,7 @@ defmodule Diamorfosi do
 
   """
   def fetch(path, options \\ []) do
-    {api_options, options} = split_options(options, [:type, :dir, :condition])
+    {api_options, options} = split_options(options, [:type, :dir, :timeout])
     case API.get(path, api_options, options) do
       {:ok, value} -> process_api_value(value, options)
       {:error, _, %{"message" => message}} -> {:error, message}
@@ -84,20 +84,36 @@ defmodule Diamorfosi do
   end
 
   @doc """
-  Set the value for key at `path`.
+  Set the value at `path`.
+
+  If `type: <type>` option is passed, it will try to encode the value and will
+  raise `Diamorfosi.ValueError` in case of failure. By default, the argument
+  is passed through `to_string()`.
+
+  If `path` points to a directory, `{:error, "Not a file"}` will be returned.
+
+  ## Types
+
+    * `:str` (default) - pass the value through `to_string()`
+    * `:json` - the value is encoded as JSON
+    * `:term` - the value is encoded with `:erlang.binary_to_term`
+    * `<function>` - the value is passed through the provided function of one
+      argument that should return a string
 
   ## Options
 
-  Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_3
+    * `condition: [...]` - a list of predicates, effectively performs atomic
+      compare-and-swap in etcd terms
+
+  ## etcd options
+
+    * `ttl: <int>` - set the time-to-live for the value in seconds
+
+  Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_3,
+             https://coreos.com/docs/distributed-configuration/etcd-api/#toc_12
   """
-  # options: [type: :num]
-  # options: [condition: %{...}, update: true]  # compareAndSwap
   def set(path, value, options \\ []) do
-    {api_options, options} = Enum.partition(options, fn {name, _} -> name in [:ttl] end)
-    {api_options, options} = case Keyword.pop(options, :condition, nil) do
-      {nil, options} -> {api_options, options}
-      {condition, options} -> {condition ++ api_options, options}
-    end
+    {api_options, options} = split_options(options, [:type, :condition, :timeout])
     {type, options} = Keyword.pop(options, :type, :str)
     api_val = encode_value(value, type)
     case API.put(path, api_val, api_options, [decode_body: :error] ++ options) do
@@ -107,7 +123,20 @@ defmodule Diamorfosi do
   end
 
   @doc """
-  Synonym for `set(path, value, [type: :term])`.
+  Set the value at `path` and raise in case of failure.
+
+  See `set/3` for details.
+  """
+  def set!(path, value, options \\ []) do
+    case set(path, value, options) do
+      :ok -> :ok
+      {:error, message} ->
+        raise Diamorfosi.KeyError, message: "set #{path}: #{message}"
+    end
+  end
+
+  @doc """
+  Synonym for `set(path, value, [type: :term] ++ options)`.
   """
   def set_term(path, value, options \\ []) do
     set(path, value, [type: :term] ++ options)
