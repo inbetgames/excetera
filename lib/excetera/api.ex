@@ -76,6 +76,10 @@ defmodule Excetera.API do
     end
   end
 
+  defp decode_body(_, null, _) when null in [nil, ""] do
+    nil
+  end
+
   defp decode_body(:ok, body, options) do
     case Keyword.get(options, :decode_body, true) do
       succ when succ in [true, :success] -> Jazz.decode!(body)
