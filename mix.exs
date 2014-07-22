@@ -13,7 +13,7 @@ defmodule Diamorfosi.Mixfile do
   def application do
     [
       mod: { Diamorfosi.Application, [] },
-      applications: [:httpoison, :jazz, :exlager],
+      applications: [:httpoison, :jazz],
       env: [etcd_url: "http://127.0.0.1:4001/v2/keys"],
     ]
   end
@@ -21,7 +21,6 @@ defmodule Diamorfosi.Mixfile do
   defp deps do
     [
       {:httpoison, github: "edgurgel/httpoison"},
-      {:exlager, github: "khia/exlager"},
       {:jazz, github: "meh/jazz"}
     ]
   end
