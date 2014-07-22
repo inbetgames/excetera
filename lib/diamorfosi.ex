@@ -46,8 +46,8 @@ defmodule Diamorfosi do
       {condition, options} -> {condition ++ api_options, options}
     end
     case API.get(path, api_options, options) do
-      {:error, _, %{"message" => message}} -> {:error, message}
       {:ok, value} -> process_api_value(value, options)
+      {:error, _, %{"message" => message}} -> {:error, message}
     end
   end
 
@@ -80,8 +80,8 @@ defmodule Diamorfosi do
     end
     {type, options} = Keyword.pop(options, :type, :str)
     api_val = encode_value(value, type)
-    case API.put(path, api_val, api_options, options) do
-      {:ok, _} -> :ok
+    case API.put(path, api_val, api_options, [decode_body: :error] ++ options) do
+      {:ok, nil} -> :ok
       {:error, _, %{"message" => message}} -> {:error, message}
     end
   end
@@ -135,8 +135,8 @@ defmodule Diamorfosi do
   # options: [condition: %{...}]  # compareAndDelete
   # options: [recursive: true]
   def delete(path, options \\ []) do
-    case API.delete(path, options) do
-      {:ok, _} -> :ok
+    case API.delete(path, [decode_body: :error] ++ options) do
+      {:ok, nil} -> :ok
       {:error, _, %{"message" => message}} -> {:error, message}
     end
   end
@@ -147,8 +147,8 @@ defmodule Diamorfosi do
   Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_14
   """
   def mkdir(path, options \\ []) do
-    case API.put(path, nil, [dir: true] ++ options) do
-      {:ok, _} -> :ok
+    case API.put(path, nil, [dir: true] ++ options, decode_body: :error) do
+      {:ok, nil} -> :ok
       {:error, 403, _} -> {:error, "Key already exists"}
       {:error, _, %{"message" => message}} -> {:error, message}
     end
@@ -174,8 +174,8 @@ defmodule Diamorfosi do
   Remove an empty directory at `path`.
   """
   def rmdir(path, options \\ []) do
-    case API.delete(path, [dir: true]++options) do
-      {:ok, _} -> :ok
+    case API.delete(path, [dir: true, decode_body: :error]++options) do
+      {:ok, nil} -> :ok
       {:error, _, %{"message" => message}} -> {:error, message}
     end
   end
