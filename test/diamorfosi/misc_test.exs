@@ -14,13 +14,48 @@ defmodule DiamorfosiTest.MiscTest do
   test "waiting" do
     pid = self()
 
-    spawn(fn ->
+    spawn_link(fn ->
       send(pid, {:done_waiting, Diamorfosi.fetch!("/misc_test/a", wait: true)})
     end)
     refute_receive _
 
     :ok = Diamorfosi.set "/misc_test/a", "1"
     assert_receive {:done_waiting, "1"}
+  end
+
+  test "get and fetch timeout" do
+    # TODO: investigate hackney timeouts
+  end
+
+  test "set timeout" do
+    # TODO: investigate hackney timeouts
+  end
+
+  test "wait timeout" do
+    # TODO: investigate hackney timeouts
+    #Application.put_env(:diamorfosi, :timeout, 10)
+
+    #pid = self()
+    #spawn_link(fn ->
+    #  send(pid, {:done_waiting, Diamorfosi.fetch!("/misc_test/w", wait: true)})
+    #end)
+    #:timer.sleep(100)
+    #refute_receive _
+
+    #:ok = Diamorfosi.set("/misc_test/w", "tadam!")
+    #assert_receive {:done_waiting, "tadam!"}
+  after
+    :application.unset_env(:diamorfosi, :timeout)
+  end
+
+  test "wait explicit timeout" do
+    #pid = self()
+    #spawn_link(fn ->
+    #  send(pid, {:done_waiting, Diamorfosi.fetch("/misc_test/w", wait: true, timeout: 10)})
+    #end)
+    #refute_receive _
+    #:timer.sleep(100)
+    #assert_receive {:done_waiting, {:error, "Timeout"}}
   end
 
   test "compare and swap" do

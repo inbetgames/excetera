@@ -42,10 +42,7 @@ defmodule DiamorfosiTest.ApiTest do
   test "wait delete" do
     pid = self()
 
-    # FIXME: set default timeout to a small value to test that waiting is not
-    # affected by it
-
-    spawn(fn ->
+    spawn_link(fn ->
       send(pid, {:done_waiting, API.get("/api_test/a/b", wait: true)})
     end)
     refute_receive _
@@ -64,7 +61,7 @@ defmodule DiamorfosiTest.ApiTest do
   test "wait set" do
     pid = self()
 
-    spawn(fn ->
+    spawn_link(fn ->
       send(pid, {:done_waiting, API.get("/api_test/a/b", wait: true)})
     end)
     refute_receive _
@@ -76,7 +73,7 @@ defmodule DiamorfosiTest.ApiTest do
   test "wait set dir" do
     pid = self()
 
-    spawn(fn ->
+    spawn_link(fn ->
       send(pid, {:done_waiting, API.get("/api_test/a/b", wait: true)})
     end)
     refute_receive _
@@ -88,7 +85,7 @@ defmodule DiamorfosiTest.ApiTest do
   test "recursive wait" do
     pid = self()
 
-    spawn(fn ->
+    spawn_link(fn ->
       send(pid, {:done_waiting, API.get("/api_test/a", wait: true, recursive: true)})
     end)
     refute_receive _
