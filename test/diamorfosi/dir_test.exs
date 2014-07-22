@@ -79,6 +79,9 @@ defmodule DiamorfosiTest.DirTest do
 
     assert {:error, "Not a file"} = Diamorfosi.delete("/dir_test/a")
     assert {:error, "Directory not empty"} = Diamorfosi.rmdir("/dir_test/a")
+    assert_raise Diamorfosi.KeyError, "rmdir /dir_test/a: Directory not empty", fn ->
+      Diamorfosi.rmdir!("/dir_test/a")
+    end
 
     assert :ok = Diamorfosi.delete("/dir_test/a", recursive: true)
     assert Diamorfosi.lsdir("/dir_test/a") == {:error, "Key not found"}

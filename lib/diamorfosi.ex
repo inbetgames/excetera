@@ -251,11 +251,31 @@ defmodule Diamorfosi do
 
   @doc """
   Remove an empty directory at `path`.
+
+  Returns `:ok` or `{:error, <reason>}`.
+
+  Accepts the same set of options as `delete/2`.
   """
   def rmdir(path, options \\ []) do
-    case API.delete(path, [dir: true]++options, decode_body: :error) do
+    {api_options, options} = split_options(options, [:condition, :timeout])
+    case API.delete(path, [dir: true] ++ api_options, [decode_body: :error] ++ options) do
       {:ok, nil} -> :ok
       {:error, _, %{"message" => message}} -> {:error, message}
+    end
+  end
+
+  @doc """
+  Remove an empty directory at `path`.
+
+  Returns `:ok` or raises `Diamorfosi.KeyError`.
+
+  See `rmdir/2` for details.
+  """
+  def rmdir!(path, options \\ []) do
+    case rmdir(path, options) do
+      :ok -> :ok
+      {:error, message} ->
+        raise Diamorfosi.KeyError, message: "rmdir #{path}: #{message}"
     end
   end
 
