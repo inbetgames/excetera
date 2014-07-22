@@ -21,8 +21,8 @@ Now you can fetch and set values:
 Excetera.set!("/test/key", "value")
 Excetera.fetch!("/test/key")
 #=> "value"
-Excetera.delete!("/test/key")
 
+Excetera.delete!("/test/key")
 Excetera.get("/test/key", "default")
 #=> "default"
 ```
