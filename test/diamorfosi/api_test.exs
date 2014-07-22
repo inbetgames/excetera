@@ -152,6 +152,20 @@ defmodule DiamorfosiTest.ApiTest do
   end
 
   test "compare and delete" do
+    {:ok, _} = API.put("/api_test/a", "hello", [])
+    assert {:error, _, %{"message" => "Compare failed"}}
+           = API.delete("/api_test/a", [prevValue: "bye"])
+    assert {:ok, %{"action" => "compareAndDelete",
+              "node" => %{}, "prevNode" => %{"value" => "hello"}}}
+           = API.delete("/api_test/a", [prevValue: "hello"])
+
+    {:ok, %{"node" => %{"createdIndex" => index}}} = API.put("/api_test/a/b/c", "hi", [])
+    assert {:error, _, %{"message" => "Not a file"}}
+           = API.delete("/api_test/a", [prevIndex: index-1])
+    assert {:error, _, %{"message" => "Not a file"}}
+           = API.delete("/api_test/a", [prevIndex: index])
+    assert {:error, _, %{"message" => "Not a file"}}
+           = API.delete("/api_test/a", [prevIndex: index, recursive: true])
   end
 
   test "post dir" do

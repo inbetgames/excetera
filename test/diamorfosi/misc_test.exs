@@ -23,5 +23,10 @@ defmodule DiamorfosiTest.MiscTest do
   end
 
   test "compare and delete" do
+    :ok = Diamorfosi.set("/misc_test/a/b", "1")
+    assert {:error, "Not a file"} = Diamorfosi.delete("/misc_test/a", condition: [prevValue: "1"])
+    assert {:error, "Compare failed"} = Diamorfosi.delete("/misc_test/a/b", condition: [prevValue: "2"])
+    assert :ok = Diamorfosi.delete("/misc_test/a/b", condition: [prevValue: "1"])
+    assert {:error, "Key not found"} = Diamorfosi.fetch("/misc_test/a/b")
   end
 end

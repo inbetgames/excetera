@@ -135,7 +135,12 @@ defmodule Diamorfosi do
   # options: [condition: %{...}]  # compareAndDelete
   # options: [recursive: true]
   def delete(path, options \\ []) do
-    case API.delete(path, [decode_body: :error] ++ options) do
+    {api_options, options} = Enum.partition(options, fn {name, _} -> name in [:recursive] end)
+    {api_options, options} = case Keyword.pop(options, :condition, nil) do
+      {nil, options} -> {api_options, options}
+      {condition, options} -> {condition ++ api_options, options}
+    end
+    case API.delete(path, api_options, [decode_body: :error] ++ options) do
       {:ok, nil} -> :ok
       {:error, _, %{"message" => message}} -> {:error, message}
     end
@@ -174,7 +179,7 @@ defmodule Diamorfosi do
   Remove an empty directory at `path`.
   """
   def rmdir(path, options \\ []) do
-    case API.delete(path, [dir: true, decode_body: :error]++options) do
+    case API.delete(path, [dir: true]++options, decode_body: :error) do
       {:ok, nil} -> :ok
       {:error, _, %{"message" => message}} -> {:error, message}
     end
