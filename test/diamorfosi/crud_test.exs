@@ -12,29 +12,46 @@ defmodule DiamorfosiTest.CrudTest do
   end
 
   test "setting and getting values" do
-    Diamorfosi.set "/crud_test/a", "A node"
-    Diamorfosi.set "/crud_test/dir/b", "B node"
+    :ok = Diamorfosi.set "/crud_test/a", "A node"
+    :ok = Diamorfosi.set "/crud_test/dir/b", "B node"
     assert Diamorfosi.fetch("/crud_test/a") == {:ok, "A node"}
     assert Diamorfosi.fetch!("/crud_test/dir/b") == "B node"
     assert Diamorfosi.get("/crud_test/dir/b", :def) == "B node"
     assert Diamorfosi.get("/crud_test/dir/c", :def) == :def
   end
 
+  test "delete" do
+    :ok = Diamorfosi.set "/crud_test/a", "A node"
+    assert Diamorfosi.fetch!("/crud_test/a") == "A node"
+    assert :ok = Diamorfosi.delete "/crud_test/a"
+    assert {:error, "Key not found"} = Diamorfosi.fetch "/crud_test/a"
+  end
+
+  test "delete dir" do
+    :ok = Diamorfosi.set "/crud_test/a/b/c/d", "D node"
+    assert {:error, "Not a file"} = Diamorfosi.delete "/crud_test/a/b/c"
+    assert {:error, "Directory not empty"} = Diamorfosi.rmdir "/crud_test/a/b/c"
+    :ok = Diamorfosi.delete "/crud_test/a/b/c/d"
+    assert :ok = Diamorfosi.rmdir "/crud_test/a/b/c"
+    assert :ok = Diamorfosi.delete "/crud_test/a", recursive: true
+  end
+
   test "implicit dir" do
-    Diamorfosi.set "/crud_test/dir/a", "A node"
-    Diamorfosi.set "/crud_test/dir/b", "B node"
+    :ok = Diamorfosi.set "/crud_test/dir/a", "A node"
+    :ok = Diamorfosi.set "/crud_test/dir/b", "B node"
     assert Diamorfosi.fetch("/crud_test/dir") == {:error, :is_dir}
     assert Diamorfosi.fetch("/crud_test/dir", list: true) ==
            {:ok, %{"a" => "A node", "b" => "B node"}}
   end
 
   test "setting complex values" do
-    Diamorfosi.set "/crud_test_complex", %{some: "value"}, type: :json
+    :ok = Diamorfosi.set "/crud_test_complex", %{some: "value"}, type: :json
     assert Diamorfosi.fetch!("/crud_test_complex", type: :json) == %{"some" => "value"}
   end
 
   test "setting with TTL" do
-    Diamorfosi.set "/crud_test_ttl", "valuex", [ttl: 1]
+    # FIXME: set smaller timeout value
+    :ok = Diamorfosi.set "/crud_test_ttl", "valuex", [ttl: 1]
     :timer.sleep 1500
     assert Diamorfosi.get("/crud_test_ttl", false) == false
   end

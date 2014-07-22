@@ -127,7 +127,7 @@ defmodule DiamorfosiTest.ApiTest do
     assert {:ok, %{"node" => %{"value" => "hello"}}} = API.get("/api_test/a/b/c", [])
   end
 
-  test "compare and swap" do
+  test "compare and swap index" do
     {:ok, %{"node" => %{"createdIndex" => index}}} = API.put("/api_test/a", "hello", [])
     assert {:error, _, %{"message" => "Compare failed"}}
            = API.put("/api_test/a", "bye", [prevIndex: index+1])
@@ -135,14 +135,19 @@ defmodule DiamorfosiTest.ApiTest do
            = API.put("/api_test/a", "bye", [prevIndex: index-1])
     assert {:ok, %{"action" => "compareAndSwap", "node" => %{"value" => "bye"}}}
            = API.put("/api_test/a", "bye", [prevIndex: index])
+  end
 
+  test "compare and swap value" do
+    {:ok, _} = API.put("/api_test/a", "bye", [])
     assert {:error, 404, %{"message" => "Key not found"}}
            = API.put("/api_test/b", "...", [prevValue: "hello"])
     assert {:error, _, %{"message" => "Compare failed"}}
            = API.put("/api_test/a", "...", [prevValue: "hello"])
     assert {:ok, %{"action" => "compareAndSwap", "node" => %{"value" => "..."}}}
            = API.put("/api_test/a", "...", [prevValue: "bye"])
+  end
 
+  test "compare and swap exist" do
     assert {:error, 404, %{"message" => "Key not found"}}
            = API.put("/api_test/b", "ok", [prevExist: true])
     assert {:ok, %{"action" => "create", "node" => %{"value" => "ok"}}}
@@ -151,14 +156,16 @@ defmodule DiamorfosiTest.ApiTest do
            = API.put("/api_test/b", "ko", [prevExist: true])
   end
 
-  test "compare and delete" do
+  test "compare and delete value" do
     {:ok, _} = API.put("/api_test/a", "hello", [])
     assert {:error, _, %{"message" => "Compare failed"}}
            = API.delete("/api_test/a", [prevValue: "bye"])
     assert {:ok, %{"action" => "compareAndDelete",
               "node" => %{}, "prevNode" => %{"value" => "hello"}}}
            = API.delete("/api_test/a", [prevValue: "hello"])
+  end
 
+  test "compare and delete dir" do
     {:ok, %{"node" => %{"createdIndex" => index}}} = API.put("/api_test/a/b/c", "hi", [])
     assert {:error, _, %{"message" => "Not a file"}}
            = API.delete("/api_test/a", [prevIndex: index-1])
@@ -172,9 +179,28 @@ defmodule DiamorfosiTest.ApiTest do
   end
 
   test "delete file" do
+    {:ok, _} = API.put("/api_test/a", "hello", [])
+    assert {:ok, %{"node" => %{"value" => "hello"}}} = API.get("/api_test/a", [])
+    assert {:ok, %{"node" => %{}, "prevNode" => %{"value" => "hello"}}}
+           = API.delete("/api_test/a", [])
+    assert {:error, 404, _} = API.get("/api_test/a", [])
   end
 
-  test "delete dir" do
+  test "delete non-empty dir" do
+    {:ok, _} = API.put("/api_test/a/b", "hello", [])
+    assert {:ok, %{"node" => %{"dir" => true}}} = API.get("/api_test/a", [])
+    assert {:error, _, %{"message" => "Not a file"}} = API.delete("/api_test/a", [])
+    assert {:error, _, %{"message" => "Directory not empty"}} = API.delete("/api_test/a", [dir: true])
+    assert {:ok, _} = API.delete("/api_test/a", [recursive: true])
+    assert {:error, 404, _} = API.get("/api_test/a", [])
+  end
+
+  test "delete empty dir" do
+    {:ok, _} = API.put("/api_test/a", nil, [dir: true])
+    assert {:ok, %{"node" => %{"dir" => true}}} = API.get("/api_test/a", [])
+    assert {:error, _, %{"message" => "Not a file"}} = API.delete("/api_test/a", [])
+    assert {:ok, _} = API.delete("/api_test/a", [dir: true])
+    assert {:error, 404, _} = API.get("/api_test/a", [])
   end
 
   test "time to live" do
