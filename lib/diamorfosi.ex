@@ -435,4 +435,8 @@ defmodule Diamorfosi do
   defp code_value(:de, val, :json) do
     val |> Jazz.decode!
   end
+
+  defp code_value(_, val, fun) when is_function(fun, 1) do
+    fun.(val)
+  end
 end

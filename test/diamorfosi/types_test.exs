@@ -52,4 +52,12 @@ defmodule DiamorfosiTest.TypesTest do
     :ok = Diamorfosi.set_term("/types_test/term", tuple)
     assert ^tuple = Diamorfosi.get_term("/types_test/term", nil)
   end
+
+  test "custom" do
+    list = [1, 2, 3, 4]
+    encode = fn list -> Enum.reverse(list) |> :erlang.list_to_binary |> Base.url_encode64 end
+    decode = fn data -> data |> Base.url_decode64! |> :erlang.binary_to_list end
+    assert :ok = Diamorfosi.set("/types_test/list", list, type: encode)
+    assert [4, 3, 2, 1] = Diamorfosi.get("/types_test/list", nil, type: decode)
+  end
 end
