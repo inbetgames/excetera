@@ -68,6 +68,9 @@ defmodule DiamorfosiTest.DirTest do
 
     assert :ok = Diamorfosi.mkdir("/dir_test/dir")
     assert {:error, "Key already exists"} = Diamorfosi.mkdir("/dir_test/dir")
+    assert_raise Diamorfosi.KeyError, "mkdir /dir_test/dir: Key already exists", fn ->
+      Diamorfosi.mkdir!("/dir_test/dir")
+    end
 
     assert {:error, "Not a file"} = Diamorfosi.delete("/dir_test/dir")
     assert :ok = Diamorfosi.rmdir("/dir_test/dir")

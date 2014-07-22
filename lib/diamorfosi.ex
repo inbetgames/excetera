@@ -202,13 +202,34 @@ defmodule Diamorfosi do
   @doc """
   Create a new directory at `path`.
 
+  Accepts the same set of options as `set/3` except for the `:type` one.
+
+  Returns `:ok` or `{:error, <reason>}`.
+
   Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_14
   """
   def mkdir(path, options \\ []) do
-    case API.put(path, nil, [dir: true] ++ options, decode_body: :error) do
+    {api_options, options} = split_options(options, [:condition, :timeout])
+    case API.put(path, nil, [dir: true] ++ api_options, [decode_body: :error] ++ options) do
       {:ok, nil} -> :ok
-      {:error, 403, _} -> {:error, "Key already exists"}
+      {:error, 403, %{"message" => "Not a file"}} ->
+        {:error, "Key already exists"}  # nicer error message
       {:error, _, %{"message" => message}} -> {:error, message}
+    end
+  end
+
+  @doc """
+  Create a new directory at `path`.
+
+  Returns `:ok` or raises `Diamorfosi.KeyError`.
+
+  See `mkdir/2` for details.
+  """
+  def mkdir!(path, options \\ []) do
+    case mkdir(path, options) do
+      :ok -> :ok
+      {:error, message} ->
+        raise Diamorfosi.KeyError, message: "mkdir #{path}: #{message}"
     end
   end
 
