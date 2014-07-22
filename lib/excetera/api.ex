@@ -67,6 +67,10 @@ defmodule Excetera.API do
       %HTTPoison.Response{status_code: code, body: body} when code in [200, 201] ->
         {:ok, decode_body(:ok, body, options)}
 
+      %HTTPoison.Response{status_code: 307} ->
+        # try again, die hard mode
+        request(type, url, headers, body, options)
+
       %HTTPoison.Response{status_code: status, body: body} ->
         {:error, decode_body(:error, body, options) || status}
     end
