@@ -176,6 +176,10 @@ defmodule DiamorfosiTest.ApiTest do
   end
 
   test "post dir" do
+    assert {:ok, %{"node" => %{"value" => "1", "key" => key1}}} = API.post("/api_test/a", "1", [])
+    assert {:ok, %{"node" => %{"value" => "2", "key" => key2}}} = API.post("/api_test/a", "2", [])
+    assert {:ok, %{"node" => %{"value" => "1"}}} = API.get(key1, [])
+    assert {:ok, %{"node" => %{"value" => "2"}}} = API.get(key2, [])
   end
 
   test "delete file" do
