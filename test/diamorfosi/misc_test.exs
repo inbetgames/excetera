@@ -12,6 +12,15 @@ defmodule DiamorfosiTest.MiscTest do
   end
 
   test "waiting" do
+    pid = self()
+
+    spawn(fn ->
+      send(pid, {:done_waiting, Diamorfosi.fetch!("/misc_test/a", wait: true)})
+    end)
+    refute_receive _
+
+    :ok = Diamorfosi.set "/misc_test/a", "1"
+    assert_receive {:done_waiting, "1"}
   end
 
   test "compare and swap" do

@@ -40,7 +40,7 @@ defmodule Diamorfosi do
   # options: [type: :int, timeout: ...]
   # options: [type: fn(x) -> ... end]
   def fetch(path, options \\ []) do
-    {api_options, options} = Enum.partition(options, fn {name, _} -> name in [:dir] end)
+    {api_options, options} = Enum.partition(options, fn {name, _} -> name in [:dir, :wait, :waitIndex] end)
     {api_options, options} = case Keyword.pop(options, :condition, nil) do
       {nil, options} -> {api_options, options}
       {condition, options} -> {condition ++ api_options, options}
@@ -182,18 +182,6 @@ defmodule Diamorfosi do
     case API.delete(path, [dir: true]++options, decode_body: :error) do
       {:ok, nil} -> :ok
       {:error, _, %{"message" => message}} -> {:error, message}
-    end
-  end
-
-  @doc """
-  Wait for the value at `path` to change.
-
-  Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_9
-  """
-  def wait(path, options \\ []) do
-    case API.get(path, [wait: true] ++ options) do
-      {:ok, value} -> process_api_value(value, options)
-      {:error, ...} -> ...
     end
   end
 
