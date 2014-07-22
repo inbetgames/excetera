@@ -2,7 +2,6 @@ import LAXer
 
 defmodule Diamorfosi do
   use Application
-  require Lager
 
   @etcd "http://my.host.name:8080/v2/keys"
   @timeout 5000
@@ -38,7 +37,7 @@ defmodule Diamorfosi do
   	timeout = Keyword.get options, :timeout, @timeout
   	case HTTPoison.get "#{@etcd}#{path}", [], [timeout: timeout] do
   		%HTTPoison.Response{status_code: 200, body: body} -> body |> Jazz.decode!
-      %HTTPoison.Response{status_code: 404} -> false
+  		_ -> false
   	end
   end
   
