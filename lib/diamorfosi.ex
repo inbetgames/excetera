@@ -42,8 +42,8 @@ defmodule Diamorfosi do
   Get the value at `path` and return `{:ok, <value>}` or `{:error, <reason>}`.
 
   If `type: <type>` option is passed, it will try to parse the value and will
-  raise `Diamorfosi.ValueError` in case of failure. By default, the argument is
-  interpreted as a string and returned as is.
+  raise in case of failure. By default, the argument is interpreted as a string
+  and returned as is.
 
   If `path` points to a directory, `{:error, "Not a file"}` will be returned
   unless `dir: true` option is passed.
@@ -95,8 +95,8 @@ defmodule Diamorfosi do
   Set the value at `path`.
 
   If `type: <type>` option is passed, it will try to encode the value and will
-  raise `Diamorfosi.ValueError` in case of failure. By default, the argument
-  is passed through `to_string()`.
+  raise in case of failure. By default, the argument is passed through
+  `to_string()`.
 
   If `path` points to a directory, `{:error, "Not a file"}` will be returned.
 
@@ -378,19 +378,14 @@ defmodule Diamorfosi do
     case {node["dir"], Keyword.get(options, :dir, false)} do
       {true, true} -> {:ok, process_dir_listing(node["nodes"], [])}
       {true, false} -> {:error, "Not a file"}
-      {nil, _} -> decode_api_node(node, options)
+      {nil, _} -> {:ok, decode_api_node(node, options)}
     end
   end
 
   defp decode_api_node(node, options) do
     value = node["value"]
     type = Keyword.get(options, :type, :str)
-    try do
-      {:ok, decode_value(value, type)}
-    rescue
-      # FIXME: this may hide programming bugs
-      _ -> {:error, "Failed to parse #{value} as #{value}"}
-    end
+    decode_value(value, type)
   end
 
   defp process_dir_listing(nodes, options) do
@@ -421,10 +416,10 @@ defmodule Diamorfosi do
   defp decode_value(val, typ), do: code_value(:de, val, typ)
 
   defp code_value(:en, val, :str) do
-    val |> URI.encode_www_form
+    val |> to_string |> URI.encode_www_form
   end
   defp code_value(:de, val, :str) do
-    val |> URI.decode_www_form
+    val
   end
 
   defp code_value(:en, val, :term) do
