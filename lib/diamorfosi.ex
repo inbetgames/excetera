@@ -236,16 +236,46 @@ defmodule Diamorfosi do
   @doc """
   List directory contents at `path`.
 
-  recursive: true
+  Returns `{:ok, <contents>}` or `{:error, <reason>}`. In particular, if `path`
+  does not point to a directory, returns `{:error, "Not a directory"}`.
+
+  Depending on the value of the `:sorted` option, returns the contents of a
+  directory as a map (default) or as a list.
+
+  ## Options
+
+    * `timeout: <int>` - request timeout in milliseconds
+
+  ## etcd options
+
+    * `sorted: <bool>` - when true, returns the contents as a list; useful when
+      fetching the contents of a directory with in-order keys
+    * `recursive: <bool>` - whether to fetch the contents of child directories
 
   Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_15
   """
   def lsdir(path, options \\ []) do
-    case API.get(path, options) do
+    {api_options, options} = split_options(options, [:timeout])
+    case API.get(path, api_options, options) do
       {:ok, %{"node" => %{"dir" => true}=node}} ->
-        {:ok, process_dir_listing(node["nodes"], options)}
+        {:ok, process_dir_listing(node["nodes"], api_options)}
       {:ok, _} -> {:error, "Not a directory"}
       {:error, _, %{"message" => message}} -> {:error, message}
+    end
+  end
+
+  @doc """
+  List directory contents at `path`.
+
+  Returns just the contents or raises in case of failure.
+
+  See `lsdir/2` for details.
+  """
+  def lsdir!(path, options \\ []) do
+    case lsdir(path, options) do
+      {:ok, value} -> value
+      {:error, message} ->
+        raise Diamorfosi.KeyError, message: "lsdir #{path}: #{message}"
     end
   end
 
@@ -346,7 +376,7 @@ defmodule Diamorfosi do
   defp process_api_value(value, options) do
     node = value["node"]
     case {node["dir"], Keyword.get(options, :dir, false)} do
-      {true, true} -> {:ok, process_dir_listing(node["nodes"], options)}
+      {true, true} -> {:ok, process_dir_listing(node["nodes"], [])}
       {true, false} -> {:error, "Not a file"}
       {nil, _} -> decode_api_node(node, options)
     end
@@ -370,14 +400,14 @@ defmodule Diamorfosi do
           process_dir_listing(node["nodes"], options)
         else
           # FIXME: these defaults might not be the best choice
-          if options[:sort], do: [], else: %{}
+          if options[:sorted], do: [], else: %{}
         end
         [{trunc_key(key), value}|acc]
 
       %{"key" => key, "value" => value}, acc ->
         [{trunc_key(key), value}|acc]
     end)
-    if options[:sort], do: Enum.reverse(list), else: Enum.into(list, %{})
+    if options[:sorted], do: Enum.reverse(list), else: Enum.into(list, %{})
   end
 
   defp trunc_key(key) do

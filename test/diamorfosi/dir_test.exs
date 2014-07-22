@@ -20,7 +20,11 @@ defmodule DiamorfosiTest.DirTest do
     Diamorfosi.set "/dir_test/dir/d/e", "4"
     Diamorfosi.set "/dir_test/dir/d/f", "5"
 
-    assert Diamorfosi.lsdir("/dir_test/a") == {:error, "Not a directory"}
+    assert {:error, "Not a directory"} = Diamorfosi.lsdir("/dir_test/a")
+    assert_raise Diamorfosi.KeyError, "lsdir /dir_test/a: Not a directory", fn ->
+      Diamorfosi.lsdir!("/dir_test/a")
+    end
+
     assert Diamorfosi.lsdir("/dir_test/dir") ==
            {:ok, %{"b" => "2", "c" => "3", "d" => %{}}}
     assert Diamorfosi.lsdir("/dir_test/dir", recursive: true) ==
@@ -54,12 +58,12 @@ defmodule DiamorfosiTest.DirTest do
     assert Diamorfosi.lsdir("/dir_test/ord") == {:ok, map}
 
     listing = [{key1, "hello"}, {key2, "world"}, {"sub", []}]
-    assert Diamorfosi.lsdir("/dir_test/ord", sort: true) == {:ok, listing}
+    assert Diamorfosi.lsdir("/dir_test/ord", sorted: true) == {:ok, listing}
 
     rec_listing = [
       {key1, "hello"}, {key2, "world"}, {"sub", [{key3, "it's"}, {key4, "me"}]}
     ]
-    assert Diamorfosi.lsdir("/dir_test/ord", sort: true, recursive: true) ==
+    assert Diamorfosi.lsdir("/dir_test/ord", sorted: true, recursive: true) ==
            {:ok, rec_listing}
   end
 
