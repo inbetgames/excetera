@@ -1,4 +1,4 @@
-defmodule Diamorfosi.Application do
+defmodule Excetera.Application do
   use Application
 
   @doc false
@@ -7,12 +7,12 @@ defmodule Diamorfosi.Application do
 
     children = [
       # Define workers and child supervisors to be supervised
-      # worker(Diamorfosi.Worker, [arg1, arg2, arg3])
+      # worker(Excetera.Worker, [arg1, arg2, arg3])
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: Diamorfosi.Supervisor]
+    opts = [strategy: :one_for_one, name: Excetera.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end

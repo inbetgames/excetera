@@ -1,8 +1,8 @@
-defmodule Diamorfosi.API.Error do
+defmodule Excetera.API.Error do
   defstruct errorCode: 0, message: "", cause: "", index: 0
 end
 
-defmodule Diamorfosi.API do
+defmodule Excetera.API do
   @body_headers [{"Content-Type", "application/x-www-form-urlencoded"}]
 
   def get("/"<>_=path, api_options, options \\ []) do
@@ -67,9 +67,17 @@ defmodule Diamorfosi.API do
       %HTTPoison.Response{status_code: code, body: body} when code in [200, 201] ->
         {:ok, decode_body(:ok, body, options)}
 
+      %HTTPoison.Response{status_code: 307} ->
+        # try again, die hard mode
+        request(type, url, headers, body, options)
+
       %HTTPoison.Response{status_code: status, body: body} ->
         {:error, decode_body(:error, body, options) || status}
     end
+  end
+
+  defp decode_body(_, null, _) when null in [nil, ""] do
+    nil
   end
 
   defp decode_body(:ok, body, options) do
@@ -82,7 +90,7 @@ defmodule Diamorfosi.API do
   defp decode_body(:error, body, options) do
     case Keyword.get(options, :decode_body, true) do
       err when err in [true, :error] ->
-        Jazz.decode!(body, as: Diamorfosi.API.Error)
+        Jazz.decode!(body, as: Excetera.API.Error)
       _ -> nil
     end
   end
@@ -93,6 +101,6 @@ defmodule Diamorfosi.API do
     |> Enum.join("&")
   end
 
-  defp etcd_url, do: Application.get_env(:diamorfosi, :etcd_url)
-  defp default_timeout, do: Application.get_env(:diamorfosi, :timeout, 3333)
+  defp etcd_url, do: Application.get_env(:excetera, :etcd_url)
+  defp default_timeout, do: Application.get_env(:excetera, :timeout, 5000)
 end

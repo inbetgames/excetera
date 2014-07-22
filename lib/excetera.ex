@@ -1,13 +1,17 @@
-defmodule Diamorfosi do
-  alias Diamorfosi.API
+defmodule Excetera.KeyError do
+  defexception [:message]
+end
+
+defmodule Excetera do
+  alias Excetera.API
 
   @moduledoc """
-  Simpler interface on top of Diamorfosi.API.
+  Simpler interface on top of Excetera.API.
 
   In all the functions here that take `path`, it should be a string beginning
   with a slash (`/`).
 
-  See `Diamorfosi.API` docs for the list of common available options.
+  See `Excetera.API` docs for the list of common available options.
   """
 
   @doc """
@@ -17,7 +21,7 @@ defmodule Diamorfosi do
   parse, `default` will be returned.
 
   If `path` points to a directory, it will return its contents if `dir: true`
-  option is passed; will raise `Diamorfosi.KeyError` otherwise.
+  option is passed; will raise `Excetera.KeyError` otherwise.
 
   See `fetch/2` for details.
 
@@ -26,7 +30,7 @@ defmodule Diamorfosi do
   def get(path, default, options \\ []) do
     case fetch(path, options) do
       {:ok, value} -> value
-      {:error, "Not a file"=reason} -> raise Diamorfosi.KeyError, message: "get #{path}: #{reason}"
+      {:error, "Not a file"=reason} -> raise Excetera.KeyError, message: "get #{path}: #{reason}"
       {:error, _reason} -> default
     end
   end
@@ -87,7 +91,7 @@ defmodule Diamorfosi do
   def fetch!(path, options \\ []) do
     case fetch(path, options) do
       {:ok, value} -> value
-      {:error, message} -> raise Diamorfosi.KeyError, message: "fetch #{path}: #{message}"
+      {:error, message} -> raise Excetera.KeyError, message: "fetch #{path}: #{message}"
     end
   end
 
@@ -141,7 +145,7 @@ defmodule Diamorfosi do
     case set(path, value, options) do
       :ok -> :ok
       {:error, message} ->
-        raise Diamorfosi.KeyError, message: "set #{path}: #{message}"
+        raise Excetera.KeyError, message: "set #{path}: #{message}"
     end
   end
 
@@ -187,7 +191,7 @@ defmodule Diamorfosi do
   @doc """
   Delete the value at `path`.
 
-  Returns `:ok` in case of success, raises `Diamorfosi.KeyError` otherwise.
+  Returns `:ok` in case of success, raises `Excetera.KeyError` otherwise.
 
   See `delete/2` for details.
   """
@@ -195,7 +199,7 @@ defmodule Diamorfosi do
     case delete(path, options) do
       :ok -> :ok
       {:error, message} ->
-        raise Diamorfosi.KeyError, message: "delete #{path}: #{message}"
+        raise Excetera.KeyError, message: "delete #{path}: #{message}"
     end
   end
 
@@ -221,7 +225,7 @@ defmodule Diamorfosi do
   @doc """
   Create a new directory at `path`.
 
-  Returns `:ok` or raises `Diamorfosi.KeyError`.
+  Returns `:ok` or raises `Excetera.KeyError`.
 
   See `mkdir/2` for details.
   """
@@ -229,7 +233,7 @@ defmodule Diamorfosi do
     case mkdir(path, options) do
       :ok -> :ok
       {:error, message} ->
-        raise Diamorfosi.KeyError, message: "mkdir #{path}: #{message}"
+        raise Excetera.KeyError, message: "mkdir #{path}: #{message}"
     end
   end
 
@@ -275,7 +279,7 @@ defmodule Diamorfosi do
     case lsdir(path, options) do
       {:ok, value} -> value
       {:error, message} ->
-        raise Diamorfosi.KeyError, message: "lsdir #{path}: #{message}"
+        raise Excetera.KeyError, message: "lsdir #{path}: #{message}"
     end
   end
 
@@ -297,7 +301,7 @@ defmodule Diamorfosi do
   @doc """
   Remove an empty directory at `path`.
 
-  Returns `:ok` or raises `Diamorfosi.KeyError`.
+  Returns `:ok` or raises `Excetera.KeyError`.
 
   See `rmdir/2` for details.
   """
@@ -305,7 +309,7 @@ defmodule Diamorfosi do
     case rmdir(path, options) do
       :ok -> :ok
       {:error, message} ->
-        raise Diamorfosi.KeyError, message: "rmdir #{path}: #{message}"
+        raise Excetera.KeyError, message: "rmdir #{path}: #{message}"
     end
   end
 
@@ -319,9 +323,9 @@ defmodule Diamorfosi do
 
   ## Examples
 
-      {:ok, key1} = Diamorfosi.put("/put_test/dir", "hello")
-      key2 = Diamorfosi.put!("/put_test/dir", "world")
-      "world" = Diamorfosi.fetch!("/put_test/dir/" <> key2)
+      {:ok, key1} = Excetera.put("/put_test/dir", "hello")
+      key2 = Excetera.put!("/put_test/dir", "world")
+      "world" = Excetera.fetch!("/put_test/dir/" <> key2)
 
   """
   def put(path, value, options \\ []) do
@@ -343,18 +347,18 @@ defmodule Diamorfosi do
     case put(path, value, options) do
       {:ok, key} -> key
       {:error, message} ->
-        raise Diamorfosi.KeyError, message: "put #{path}: #{message}"
+        raise Excetera.KeyError, message: "put #{path}: #{message}"
     end
   end
 
   # FIXME: what is this?
   defmacro serial(dataset_name, code) do
     quote do
-      case Diamorfosi.set("/atoms/#{unquote(dataset_name)}", Jazz.encode!([processing: true]), [prevExist: false]) do
+      case Excetera.set("/atoms/#{unquote(dataset_name)}", Jazz.encode!([processing: true]), [prevExist: false]) do
         false -> {:error, unquote(dataset_name)}
         _set_result ->
           result = unquote(code)
-          Diamorfosi.set("/atoms/#{unquote(dataset_name)}", Jazz.encode!([processing: false]), [prevExist: true, ttl: 1])
+          Excetera.set("/atoms/#{unquote(dataset_name)}", Jazz.encode!([processing: false]), [prevExist: true, ttl: 1])
           result
       end
     end
