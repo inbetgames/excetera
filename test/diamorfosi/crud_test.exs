@@ -44,8 +44,15 @@ defmodule DiamorfosiTest.CrudTest do
            {:ok, %{"a" => "A node", "b" => "B node"}}
   end
 
-  test "setting complex values" do
-    :ok = Diamorfosi.set "/crud_test_complex", %{some: "value"}, type: :json
-    assert Diamorfosi.fetch!("/crud_test_complex", type: :json) == %{"some" => "value"}
+  test "setting json" do
+    :ok = Diamorfosi.set "/crud_test/complex", %{some: "value"}, type: :json
+    assert Diamorfosi.fetch!("/crud_test/complex", type: :json) == %{"some" => "value"}
+  end
+
+  test "setting terms" do
+    value = %{some: "value", with: {:a, 'tuple'}}
+    :ok = Diamorfosi.set_term "/crud_test/term", value
+    assert Diamorfosi.get_term("/crud_test/term", nil) == value
+    assert Diamorfosi.fetch!("/crud_test/term", type: :term) == value
   end
 end
