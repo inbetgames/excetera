@@ -54,6 +54,9 @@ defmodule DiamorfosiTest.CrudTest do
   test "delete dir" do
     :ok = Diamorfosi.set "/crud_test/a/b/c/d", "D node"
     assert {:error, "Not a file"} = Diamorfosi.delete "/crud_test/a/b/c"
+    assert_raise Diamorfosi.KeyError, "delete /crud_test/a/b/c: Not a file", fn ->
+      Diamorfosi.delete! "/crud_test/a/b/c"
+    end
     assert {:error, "Directory not empty"} = Diamorfosi.rmdir "/crud_test/a/b/c"
     :ok = Diamorfosi.delete "/crud_test/a/b/c/d"
     assert :ok = Diamorfosi.rmdir "/crud_test/a/b/c"

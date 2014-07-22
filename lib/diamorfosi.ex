@@ -19,6 +19,8 @@ defmodule Diamorfosi do
   If `path` points to a directory, it will return its contents if `dir: true`
   option is passed; will raise `Diamorfosi.KeyError` otherwise.
 
+  See `fetch/2` for details.
+
   Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_5
   """
   def get(path, default, options \\ []) do
@@ -45,6 +47,12 @@ defmodule Diamorfosi do
 
   If `path` points to a directory, `{:error, "Not a file"}` will be returned
   unless `dir: true` option is passed.
+
+  ## Options
+
+    * `type: <type>` - specifies how to parse the obtained value
+    * `dir: <bool>` - if `true`, return the contents of the directory as a map
+    * `timeout: <int>` - request timeout in milliseconds
 
   ## Types
 
@@ -92,6 +100,13 @@ defmodule Diamorfosi do
 
   If `path` points to a directory, `{:error, "Not a file"}` will be returned.
 
+  ## Options
+
+    * `type: <type>` - specifies how to encode the value before sending
+    * `condition: [...]` - a list of predicates, effectively performs atomic
+      compare-and-swap in etcd terms
+    * `timeout: <int>` - request timeout in milliseconds
+
   ## Types
 
     * `:str` (default) - pass the value through `to_string()`
@@ -99,11 +114,6 @@ defmodule Diamorfosi do
     * `:term` - the value is encoded with `:erlang.binary_to_term`
     * `<function>` - the value is passed through the provided function of one
       argument that should return a string
-
-  ## Options
-
-    * `condition: [...]` - a list of predicates, effectively performs atomic
-      compare-and-swap in etcd terms
 
   ## etcd options
 
@@ -147,25 +157,45 @@ defmodule Diamorfosi do
 
   Returns `:ok` in case of success.
 
-  If `path` was not found, returns `{:error, :not_found}`.
+  If `path` was not found, returns `{:error, "Key not found"}`.
 
-  If `path` points to a directory, removes it if `recursive: true` options is
-  passed, otherwise returns `{:error, :is_dir}`.
+  If `path` points to a directory, removes it if `recursive: true` option is
+  passed, otherwise returns `{:error, "Not a file"}`.
+
+  ## Options
+
+    * `condition: [...]` - a list of predicates, effectively performs atomic
+      compare-and-delete in etcd terms
+    * `timeout: <int>` - request timeout in milliseconds
+
+  ## etcd options
+
+    * `recursive: <bool>` - if `true`, and `path` points to a directory, delete
+      the directory with its children
 
   Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_7,
              https://coreos.com/docs/distributed-configuration/etcd-api/#toc_16
   """
-  # options: [condition: %{...}]  # compareAndDelete
-  # options: [recursive: true]
   def delete(path, options \\ []) do
-    {api_options, options} = Enum.partition(options, fn {name, _} -> name in [:recursive] end)
-    {api_options, options} = case Keyword.pop(options, :condition, nil) do
-      {nil, options} -> {api_options, options}
-      {condition, options} -> {condition ++ api_options, options}
-    end
+    {api_options, options} = split_options(options, [:condition, :timeout])
     case API.delete(path, api_options, [decode_body: :error] ++ options) do
       {:ok, nil} -> :ok
       {:error, _, %{"message" => message}} -> {:error, message}
+    end
+  end
+
+  @doc """
+  Delete the value at `path`.
+
+  Returns `:ok` in case of success, raises `Diamorfosi.KeyError` otherwise.
+
+  See `delete/2` for details.
+  """
+  def delete!(path, options \\ []) do
+    case delete(path, options) do
+      :ok -> :ok
+      {:error, message} ->
+        raise Diamorfosi.KeyError, message: "delete #{path}: #{message}"
     end
   end
 
