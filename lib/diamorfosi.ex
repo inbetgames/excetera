@@ -75,7 +75,7 @@ defmodule Diamorfosi do
     {api_options, options} = split_options(options, [:type, :dir, :timeout])
     case API.get(path, api_options, options) do
       {:ok, value} -> process_api_value(value, options)
-      {:error, _, %{"message" => message}} -> {:error, message}
+      {:error, %API.Error{message: message}} -> {:error, message}
     end
   end
 
@@ -128,7 +128,7 @@ defmodule Diamorfosi do
     api_val = encode_value(value, type)
     case API.put(path, api_val, api_options, [decode_body: :error] ++ options) do
       {:ok, nil} -> :ok
-      {:error, _, %{"message" => message}} -> {:error, message}
+      {:error, %API.Error{message: message}} -> {:error, message}
     end
   end
 
@@ -180,7 +180,7 @@ defmodule Diamorfosi do
     {api_options, options} = split_options(options, [:condition, :timeout])
     case API.delete(path, api_options, [decode_body: :error] ++ options) do
       {:ok, nil} -> :ok
-      {:error, _, %{"message" => message}} -> {:error, message}
+      {:error, %API.Error{message: message}} -> {:error, message}
     end
   end
 
@@ -212,9 +212,9 @@ defmodule Diamorfosi do
     {api_options, options} = split_options(options, [:condition, :timeout])
     case API.put(path, nil, [dir: true] ++ api_options, [decode_body: :error] ++ options) do
       {:ok, nil} -> :ok
-      {:error, 403, %{"message" => "Not a file"}} ->
+      {:error, %API.Error{errorCode: _, message: "Not a file"}} ->
         {:error, "Key already exists"}  # nicer error message
-      {:error, _, %{"message" => message}} -> {:error, message}
+      {:error, %API.Error{message: message}} -> {:error, message}
     end
   end
 
@@ -260,7 +260,7 @@ defmodule Diamorfosi do
       {:ok, %{"node" => %{"dir" => true}=node}} ->
         {:ok, process_dir_listing(node["nodes"], api_options)}
       {:ok, _} -> {:error, "Not a directory"}
-      {:error, _, %{"message" => message}} -> {:error, message}
+      {:error, %API.Error{message: message}} -> {:error, message}
     end
   end
 
@@ -290,7 +290,7 @@ defmodule Diamorfosi do
     {api_options, options} = split_options(options, [:condition, :timeout])
     case API.delete(path, [dir: true] ++ api_options, [decode_body: :error] ++ options) do
       {:ok, nil} -> :ok
-      {:error, _, %{"message" => message}} -> {:error, message}
+      {:error, %API.Error{message: message}} -> {:error, message}
     end
   end
 
@@ -328,7 +328,7 @@ defmodule Diamorfosi do
     api_val = encode_value(value, Keyword.get(options, :type, :str))
     case API.post(path, api_val, options) do
       {:ok, %{"node" => %{"key" => key}}} -> {:ok, trunc_key(key)}
-      {:error, _, %{"message" => message}} -> {:error, message}
+      {:error, %API.Error{message: message}} -> {:error, message}
     end
   end
 

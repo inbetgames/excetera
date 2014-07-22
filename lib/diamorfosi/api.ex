@@ -1,3 +1,7 @@
+defmodule Diamorfosi.API.Error do
+  defstruct errorCode: 0, message: "", cause: "", index: 0
+end
+
 defmodule Diamorfosi.API do
   @body_headers [{"Content-Type", "application/x-www-form-urlencoded"}]
 
@@ -64,15 +68,21 @@ defmodule Diamorfosi.API do
         {:ok, decode_body(:ok, body, options)}
 
       %HTTPoison.Response{status_code: status, body: body} ->
-        {:error, status, decode_body(:error, body, options)}
+        {:error, decode_body(:error, body, options) || status}
     end
   end
 
-  defp decode_body(status, body, options) do
+  defp decode_body(:ok, body, options) do
     case Keyword.get(options, :decode_body, true) do
-      true -> Jazz.decode!(body)
-      :success when status == :ok -> Jazz.decode!(body)
-      :error when status == :error -> Jazz.decode!(body)
+      succ when succ in [true, :success] -> Jazz.decode!(body)
+      _ -> nil
+    end
+  end
+
+  defp decode_body(:error, body, options) do
+    case Keyword.get(options, :decode_body, true) do
+      err when err in [true, :error] ->
+        Jazz.decode!(body, as: Diamorfosi.API.Error)
       _ -> nil
     end
   end

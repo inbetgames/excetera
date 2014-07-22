@@ -27,9 +27,9 @@ defmodule DiamorfosiTest.ApiTest do
   end
 
   test "get file and dir" do
-    assert {:error, 404, %{"message" => "Key not found"}}
+    assert {:error, %API.Error{message: "Key not found"}}
            = API.get("/api_test", [])
-    assert {:error, 404, nil} = API.get("/api_test", [], decode_body: false)
+    assert {:error, 404} = API.get("/api_test", [], decode_body: false)
 
     {:ok, _} = API.put("/api_test/a", "hello", [])
 
@@ -112,9 +112,9 @@ defmodule DiamorfosiTest.ApiTest do
   test "put file and dir" do
     assert {:ok, %{"action" => "set", "node" => %{"value" => "hello"}}}
            = API.put("/api_test/a", "hello", [])
-    assert {:error, _, %{"message" => "Not a directory"}}
+    assert {:error, %API.Error{message: "Not a directory"}}
            = API.put("/api_test/a/b", "...", [])
-    assert {:error, _, %{"message" => "Not a directory"}}
+    assert {:error, %API.Error{message: "Not a directory"}}
            = API.put("/api_test/a/b", nil, dir: true)
     assert {:ok, %{"action" => "set", "node" => %{"dir" => true}, "prevNode" => %{"value" => "hello"}}}
            = API.put("/api_test/a", nil, dir: true)
@@ -126,9 +126,9 @@ defmodule DiamorfosiTest.ApiTest do
 
   test "compare and swap index" do
     {:ok, %{"node" => %{"createdIndex" => index}}} = API.put("/api_test/a", "hello", [])
-    assert {:error, _, %{"message" => "Compare failed"}}
+    assert {:error, %API.Error{message: "Compare failed"}}
            = API.put("/api_test/a", "bye", [prevIndex: index+1])
-    assert {:error, _, %{"message" => "Compare failed"}}
+    assert {:error, %API.Error{message: "Compare failed"}}
            = API.put("/api_test/a", "bye", [prevIndex: index-1])
     assert {:ok, %{"action" => "compareAndSwap", "node" => %{"value" => "bye"}}}
            = API.put("/api_test/a", "bye", [prevIndex: index])
@@ -136,16 +136,16 @@ defmodule DiamorfosiTest.ApiTest do
 
   test "compare and swap value" do
     {:ok, _} = API.put("/api_test/a", "bye", [])
-    assert {:error, 404, %{"message" => "Key not found"}}
+    assert {:error, %API.Error{message: "Key not found"}}
            = API.put("/api_test/b", "...", [prevValue: "hello"])
-    assert {:error, _, %{"message" => "Compare failed"}}
+    assert {:error, %API.Error{message: "Compare failed"}}
            = API.put("/api_test/a", "...", [prevValue: "hello"])
     assert {:ok, %{"action" => "compareAndSwap", "node" => %{"value" => "..."}}}
            = API.put("/api_test/a", "...", [prevValue: "bye"])
   end
 
   test "compare and swap exist" do
-    assert {:error, 404, %{"message" => "Key not found"}}
+    assert {:error, %API.Error{message: "Key not found"}}
            = API.put("/api_test/b", "ok", [prevExist: true])
     assert {:ok, %{"action" => "create", "node" => %{"value" => "ok"}}}
            = API.put("/api_test/b", "ok", [prevExist: false])
@@ -155,7 +155,7 @@ defmodule DiamorfosiTest.ApiTest do
 
   test "compare and delete value" do
     {:ok, _} = API.put("/api_test/a", "hello", [])
-    assert {:error, _, %{"message" => "Compare failed"}}
+    assert {:error, %API.Error{message: "Compare failed"}}
            = API.delete("/api_test/a", [prevValue: "bye"])
     assert {:ok, %{"action" => "compareAndDelete",
               "node" => %{}, "prevNode" => %{"value" => "hello"}}}
@@ -164,11 +164,11 @@ defmodule DiamorfosiTest.ApiTest do
 
   test "compare and delete dir" do
     {:ok, %{"node" => %{"createdIndex" => index}}} = API.put("/api_test/a/b/c", "hi", [])
-    assert {:error, _, %{"message" => "Not a file"}}
+    assert {:error, %API.Error{message: "Not a file"}}
            = API.delete("/api_test/a", [prevIndex: index-1])
-    assert {:error, _, %{"message" => "Not a file"}}
+    assert {:error, %API.Error{message: "Not a file"}}
            = API.delete("/api_test/a", [prevIndex: index])
-    assert {:error, _, %{"message" => "Not a file"}}
+    assert {:error, %API.Error{message: "Not a file"}}
            = API.delete("/api_test/a", [prevIndex: index, recursive: true])
   end
 
@@ -184,24 +184,24 @@ defmodule DiamorfosiTest.ApiTest do
     assert {:ok, %{"node" => %{"value" => "hello"}}} = API.get("/api_test/a", [])
     assert {:ok, %{"node" => %{}, "prevNode" => %{"value" => "hello"}}}
            = API.delete("/api_test/a", [])
-    assert {:error, 404, _} = API.get("/api_test/a", [])
+    assert {:error, %API.Error{message: "Key not found"}} = API.get("/api_test/a", [])
   end
 
   test "delete non-empty dir" do
     {:ok, _} = API.put("/api_test/a/b", "hello", [])
     assert {:ok, %{"node" => %{"dir" => true}}} = API.get("/api_test/a", [])
-    assert {:error, _, %{"message" => "Not a file"}} = API.delete("/api_test/a", [])
-    assert {:error, _, %{"message" => "Directory not empty"}} = API.delete("/api_test/a", [dir: true])
+    assert {:error, %API.Error{message: "Not a file"}} = API.delete("/api_test/a", [])
+    assert {:error, %API.Error{message: "Directory not empty"}} = API.delete("/api_test/a", [dir: true])
     assert {:ok, _} = API.delete("/api_test/a", [recursive: true])
-    assert {:error, 404, _} = API.get("/api_test/a", [])
+    assert {:error, %API.Error{message: "Key not found"}} = API.get("/api_test/a", [])
   end
 
   test "delete empty dir" do
     {:ok, _} = API.put("/api_test/a", nil, [dir: true])
     assert {:ok, %{"node" => %{"dir" => true}}} = API.get("/api_test/a", [])
-    assert {:error, _, %{"message" => "Not a file"}} = API.delete("/api_test/a", [])
+    assert {:error, %API.Error{message: "Not a file"}} = API.delete("/api_test/a", [])
     assert {:ok, _} = API.delete("/api_test/a", [dir: true])
-    assert {:error, 404, _} = API.get("/api_test/a", [])
+    assert {:error, %API.Error{message: "Key not found"}} = API.get("/api_test/a", [])
   end
 
   @tag :slowpoke
@@ -209,7 +209,7 @@ defmodule DiamorfosiTest.ApiTest do
     {:ok, _} = API.put("/api_test/a", "1", [ttl: 1])
     assert {:ok, _} = API.get("/api_test/a", [])
     :timer.sleep(1500)
-    assert {:error, 404, _} = API.get("/api_test/a", [])
+    assert {:error, %API.Error{message: "Key not found"}} = API.get("/api_test/a", [])
   end
 
   @tag :slowpoke
