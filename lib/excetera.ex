@@ -10,8 +10,6 @@ defmodule Excetera do
 
   In all the functions here that take `path`, it should be a string beginning
   with a slash (`/`).
-
-  See `Excetera.API` docs for the list of common available options.
   """
 
   @doc """
