@@ -347,7 +347,7 @@ defmodule Diamorfosi do
     end
   end
 
-
+  # FIXME: what is this?
   defmacro serial(dataset_name, code) do
     quote do
       case Diamorfosi.set("/atoms/#{unquote(dataset_name)}", Jazz.encode!([processing: true]), [prevExist: false]) do

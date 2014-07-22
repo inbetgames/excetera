@@ -1,97 +1,64 @@
 defmodule Diamorfosi.API do
-  @moduledoc false
-
   @default_timeout 5000
+  @body_headers [{"Content-Type", "application/x-www-form-urlencoded"}]
 
-  alias HTTPoison.Response, as: HttpResp
-
-  def get("/"<>_=keypath, api_options, options \\ []) do
-    timeout = Keyword.get(options, :timeout, @default_timeout)
-
-    headers = []
-    url = "#{etcd_url}#{keypath}#{params_to_query_string(api_options)}"
-
-    #    case options[:waitIndex] do
-    #      nil ->
-    #        get("#{path}", options)
-    #        |> (fn reply ->
-    #          wait path, Keyword.update(options, :waitIndex, (reply["modifiedIndex"] + 1), &(&1))
-    #        end).()
-    #      value when is_integer(value) ->
-    #        options = Keyword.delete options, :waitIndex
-    #        get("#{path}?wait=true&waitIndex=#{value}", options)
-    #    end
-
-    case HTTPoison.get(url, headers, [timeout: timeout]) do
-      %HttpResp{status_code: 200, body: body} ->
-        {:ok, decode_body(:ok, body, options)}
-
-      %HttpResp{status_code: status, body: body} ->
-        {:error, status, decode_body(:error, body, options)}
-    end
+  def get("/"<>_=path, api_options, options \\ []) do
+    url = build_url(path, api_options)
+    request(:get, url, [], "", options)
   end
 
-  def put("/"<>_=keypath, value, api_options, options \\ []) do
-    timeout = Keyword.get(options, :timeout, @default_timeout)
-
-    headers = [{"Content-Type", "application/x-www-form-urlencoded"}]
-    url = "#{etcd_url}#{keypath}#{params_to_query_string(api_options)}"
+  def put("/"<>_=path, value, api_options, options \\ []) do
+    url = build_url(path, api_options)
 
     {ttl, api_options} = Keyword.pop(api_options, :ttl, nil)
     if api_options[:dir], do: value = nil
     body_params = [value: value, ttl: ttl] |> Enum.reject(fn {_, x} -> x == nil end)
-    body = params_to_query_string(body_params, false)
+    body = params_to_query_string(body_params)
 
-    case HTTPoison.request(:put, url, body, headers, [timeout: timeout]) do
-      %HttpResp{status_code: code, body: body} when code in [200, 201] ->
-        {:ok, decode_body(:ok, body, options)}
-
-      #%HttpResp{status_code: 307, headers: headers} ->
-        #IO.inspect headers
-        #put(keypath, value, options)
-
-      %HttpResp{status_code: status, body: body} ->
-        {:error, status, decode_body(:error, body, options)}
-    end
+    request(:put, url, @body_headers, body, options)
   end
 
-  def post("/"<>_=keypath, value, options) do
+  def post("/"<>_=path, value, options) do
     {timeout, options} = Keyword.pop(options, :timeout, @default_timeout)
 
-    headers = [{"Content-Type", "application/x-www-form-urlencoded"}]
-    url = "#{etcd_url}#{keypath}"
+    url = build_url(path, [])
     body = encode_body([value: value] ++ options)
 
-    case HTTPoison.request(:post, url, body, headers, [timeout: timeout]) do
-      %HttpResp{status_code: code, body: body} when code in [200, 201] ->
-        {:ok, decode_body(:ok, body, options)}
-      %HttpResp{status_code: status, body: body} ->
-        {:error, status, decode_body(:error, body, options)}
-    end
+    request(:post, url, @body_headers, body, [timeout: timeout])
   end
 
-  def delete("/"<>_=keypath, api_options, options \\ []) do
+  def delete("/"<>_=path, api_options, options \\ []) do
+    url = build_url(path, api_options)
+    request(:delete, url, [], "", options)
+  end
+
+  ###
+
+  defp build_url(path, []) do
+    "#{etcd_url}#{path}"
+  end
+
+  defp build_url(path, options) do
+    build_url(path, []) <> "?" <> params_to_query_string(options)
+  end
+
+  defp params_to_query_string(params) do
+    params
+    |> Enum.reject(fn {_, val} -> val == nil end)
+    |> Enum.map(fn {name, val} -> "#{name}=#{val}" end)
+    |> Enum.join("&")
+  end
+
+  defp request(type, url, headers, body, options) do
     timeout = Keyword.get(options, :timeout, @default_timeout)
 
-    headers = []
-    url = "#{etcd_url}#{keypath}#{params_to_query_string(api_options)}"
-
-    case HTTPoison.request(:delete, url, "", headers, [timeout: timeout]) do
-      %HttpResp{status_code: 200, body: body} ->
+    case HTTPoison.request(type, url, body, headers, [timeout: timeout]) do
+      %HTTPoison.Response{status_code: code, body: body} when code in [200, 201] ->
         {:ok, decode_body(:ok, body, options)}
-      %HttpResp{status_code: status, body: body} ->
+
+      %HTTPoison.Response{status_code: status, body: body} ->
         {:error, status, decode_body(:error, body, options)}
     end
-  end
-
-  defp params_to_query_string(params, prepend_q \\ true) do
-    params =
-      params
-      |> Enum.reject(fn {_, val} -> val == nil end)
-      |> Enum.map(fn {name, val} -> "#{name}=#{val}" end)
-      |> Enum.join("&")
-    if params != "" and prepend_q, do: params = "?" <> params
-    params
   end
 
   defp decode_body(status, body, options) do
