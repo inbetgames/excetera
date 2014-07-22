@@ -1,7 +1,7 @@
-defmodule DiamorfosiTest.CrudTest do
+defmodule ExceteraTest.CrudTest do
   use ExUnit.Case
 
-  import DiamorfosiTest.Helpers
+  import ExceteraTest.Helpers
 
   setup_all do
     cleanup("/crud_test")
@@ -12,74 +12,74 @@ defmodule DiamorfosiTest.CrudTest do
   end
 
   test "setting and getting values" do
-    :ok = Diamorfosi.set "/crud_test/a", "A node"
-    :ok = Diamorfosi.set! "/crud_test/dir/b", "B node"
-    assert Diamorfosi.fetch("/crud_test/a") == {:ok, "A node"}
-    assert Diamorfosi.fetch!("/crud_test/dir/b") == "B node"
-    assert Diamorfosi.get("/crud_test/dir/b", :def) == "B node"
-    assert Diamorfosi.get("/crud_test/dir/c", :def) == :def
+    :ok = Excetera.set "/crud_test/a", "A node"
+    :ok = Excetera.set! "/crud_test/dir/b", "B node"
+    assert Excetera.fetch("/crud_test/a") == {:ok, "A node"}
+    assert Excetera.fetch!("/crud_test/dir/b") == "B node"
+    assert Excetera.get("/crud_test/dir/b", :def) == "B node"
+    assert Excetera.get("/crud_test/dir/c", :def) == :def
   end
 
   test "raising fetch" do
-    assert {:error, "Key not found"} = Diamorfosi.fetch("/crud_test/a")
-    assert_raise Diamorfosi.KeyError, "fetch /crud_test/a: Key not found", fn ->
-      Diamorfosi.fetch!("/crud_test/a")
+    assert {:error, "Key not found"} = Excetera.fetch("/crud_test/a")
+    assert_raise Excetera.KeyError, "fetch /crud_test/a: Key not found", fn ->
+      Excetera.fetch!("/crud_test/a")
     end
   end
 
   test "get directory" do
-    :ok = Diamorfosi.set "/crud_test/dir/a", "A node"
-    :ok = Diamorfosi.set "/crud_test/dir/b", "B node"
-    assert_raise Diamorfosi.KeyError, "get /crud_test/dir: Not a file", fn ->
-      Diamorfosi.get("/crud_test/dir", nil)
+    :ok = Excetera.set "/crud_test/dir/a", "A node"
+    :ok = Excetera.set "/crud_test/dir/b", "B node"
+    assert_raise Excetera.KeyError, "get /crud_test/dir: Not a file", fn ->
+      Excetera.get("/crud_test/dir", nil)
     end
-    assert %{"a" => "A node", "b" => "B node"} = Diamorfosi.get("/crud_test/dir", nil, dir: true)
+    assert %{"a" => "A node", "b" => "B node"} = Excetera.get("/crud_test/dir", nil, dir: true)
   end
 
   test "set directory" do
-    :ok = Diamorfosi.set "/crud_test/dir/a", "A node"
-    assert {:error, "Not a file"} = Diamorfosi.set("/crud_test/dir", "value")
-    assert_raise Diamorfosi.KeyError, "set /crud_test/dir: Not a file", fn ->
-      Diamorfosi.set!("/crud_test/dir", "value")
+    :ok = Excetera.set "/crud_test/dir/a", "A node"
+    assert {:error, "Not a file"} = Excetera.set("/crud_test/dir", "value")
+    assert_raise Excetera.KeyError, "set /crud_test/dir: Not a file", fn ->
+      Excetera.set!("/crud_test/dir", "value")
     end
   end
 
   test "delete" do
-    :ok = Diamorfosi.set "/crud_test/a", "A node"
-    assert Diamorfosi.fetch!("/crud_test/a") == "A node"
-    assert :ok = Diamorfosi.delete "/crud_test/a"
-    assert {:error, "Key not found"} = Diamorfosi.fetch "/crud_test/a"
+    :ok = Excetera.set "/crud_test/a", "A node"
+    assert Excetera.fetch!("/crud_test/a") == "A node"
+    assert :ok = Excetera.delete "/crud_test/a"
+    assert {:error, "Key not found"} = Excetera.fetch "/crud_test/a"
   end
 
   test "delete dir" do
-    :ok = Diamorfosi.set "/crud_test/a/b/c/d", "D node"
-    assert {:error, "Not a file"} = Diamorfosi.delete "/crud_test/a/b/c"
-    assert_raise Diamorfosi.KeyError, "delete /crud_test/a/b/c: Not a file", fn ->
-      Diamorfosi.delete! "/crud_test/a/b/c"
+    :ok = Excetera.set "/crud_test/a/b/c/d", "D node"
+    assert {:error, "Not a file"} = Excetera.delete "/crud_test/a/b/c"
+    assert_raise Excetera.KeyError, "delete /crud_test/a/b/c: Not a file", fn ->
+      Excetera.delete! "/crud_test/a/b/c"
     end
-    assert {:error, "Directory not empty"} = Diamorfosi.rmdir "/crud_test/a/b/c"
-    :ok = Diamorfosi.delete "/crud_test/a/b/c/d"
-    assert :ok = Diamorfosi.rmdir "/crud_test/a/b/c"
-    assert :ok = Diamorfosi.delete "/crud_test/a", recursive: true
+    assert {:error, "Directory not empty"} = Excetera.rmdir "/crud_test/a/b/c"
+    :ok = Excetera.delete "/crud_test/a/b/c/d"
+    assert :ok = Excetera.rmdir "/crud_test/a/b/c"
+    assert :ok = Excetera.delete "/crud_test/a", recursive: true
   end
 
   test "implicit dir" do
-    :ok = Diamorfosi.set "/crud_test/dir/a", "A node"
-    :ok = Diamorfosi.set "/crud_test/dir/b", "B node"
-    assert Diamorfosi.fetch("/crud_test/dir") == {:error, "Not a file"}
-    assert Diamorfosi.fetch("/crud_test/dir", dir: true) ==
+    :ok = Excetera.set "/crud_test/dir/a", "A node"
+    :ok = Excetera.set "/crud_test/dir/b", "B node"
+    assert Excetera.fetch("/crud_test/dir") == {:error, "Not a file"}
+    assert Excetera.fetch("/crud_test/dir", dir: true) ==
            {:ok, %{"a" => "A node", "b" => "B node"}}
   end
 
   test "setting json" do
-    :ok = Diamorfosi.set "/crud_test/complex", %{some: "value"}, type: :json
-    assert Diamorfosi.fetch!("/crud_test/complex", type: :json) == %{"some" => "value"}
+    :ok = Excetera.set "/crud_test/complex", %{some: "value"}, type: :json
+    assert Excetera.fetch!("/crud_test/complex", type: :json) == %{"some" => "value"}
   end
 
   test "setting terms" do
     value = %{some: "value", with: {:a, 0.13, 'tuple'}}
-    :ok = Diamorfosi.set_term "/crud_test/term", value
-    assert Diamorfosi.get_term("/crud_test/term", nil) === value
-    assert Diamorfosi.fetch!("/crud_test/term", type: :term) === value
+    :ok = Excetera.set_term "/crud_test/term", value
+    assert Excetera.get_term("/crud_test/term", nil) === value
+    assert Excetera.fetch!("/crud_test/term", type: :term) === value
   end
 end

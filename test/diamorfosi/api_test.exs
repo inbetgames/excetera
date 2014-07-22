@@ -1,4 +1,4 @@
-defmodule DiamorfosiTest.ApiTest do
+defmodule ExceteraTest.ApiTest do
   use ExUnit.Case
 
   # The purpose of the tests in this module is partially educational – to get
@@ -6,8 +6,8 @@ defmodule DiamorfosiTest.ApiTest do
   # more efficient to update tests in CrudTest and remove failing tests from
   # here.
 
-  import DiamorfosiTest.Helpers
-  alias Diamorfosi.API
+  import ExceteraTest.Helpers
+  alias Excetera.API
 
   setup_all do
     cleanup("/api_test")
@@ -21,7 +21,7 @@ defmodule DiamorfosiTest.ApiTest do
     {:ok, _} = API.put("/api_test/a", "hello", [])
     assert {:ok, %{"action" => "get"}} = API.get("/api_test/a", [donut: false])
 
-    #assert_raise Diamorfosi.OptionError, "Bad option: {:donut, false}", fn ->
+    #assert_raise Excetera.OptionError, "Bad option: {:donut, false}", fn ->
     #  API.get("/api_test", [], donut: false)
     #end
   end
@@ -104,7 +104,7 @@ defmodule DiamorfosiTest.ApiTest do
   test "put bad option" do
     {:ok, %{"action" => "set"}} = API.put("/api_test/a", "hello", [donut: false])
 
-    #assert_raise Diamorfosi.OptionError, "Bad option: {:donut, false}", fn ->
+    #assert_raise Excetera.OptionError, "Bad option: {:donut, false}", fn ->
     #  API.put("/api_test/a", "", [], donut: false)
     #end
   end
