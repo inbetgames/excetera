@@ -1,27 +1,36 @@
 defmodule Diamorfosi do
   alias Diamorfosi.API
 
+  @moduledoc """
+  Simpler interface on top of Diamorfosi.API.
+
+  In all the functions here that take `path`, it should be a string beginning
+  with a slash (`/`).
+
+  See `Diamorfosi.API` docs for the list of common available options.
+  """
+
   @doc """
   Get the value at `path`.
 
-  If the value is not available or failed to parse `default` will be returned.
+  If the value is not available, or a timeout was triggered, or it failed to
+  parse, `default` will be returned.
 
-  If `path` points to a directory, it will return its contents (if `list: true`
-  option is passed) or raise.
+  If `path` points to a directory, it will return its contents if `dir: true`
+  option is passed; will raise `Diamorfosi.KeyError` otherwise.
 
   Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_5
   """
-  # options: [timeout: ..., type: ...]
   def get(path, default, options \\ []) do
     case fetch(path, options) do
       {:ok, value} -> value
-      {:error, :is_dir} -> raise Diamorfosi.KeyError, message: "Tried to fetch a directory"
+      {:error, "Not a file"=reason} -> raise Diamorfosi.KeyError, message: "get #{path}: #{reason}"
       {:error, _reason} -> default
     end
   end
 
   @doc """
-  Synonym for `get(path, default, [type: :term])`.
+  Synonym for `get(path, default, [type: :term] ++ options)`.
   """
   def get_term(path, default, options \\ []) do
     get(path, default, [type: :term] ++ options)
@@ -30,21 +39,32 @@ defmodule Diamorfosi do
   @doc """
   Get the value at `path` and return `{:ok, <value>}` or `{:error, <reason>}`.
 
-  If type is specified, it will try to parse the value and will return
-  `{:error, :bad_type}` in case of failure. By default, the argument is
-  interpreted as a string.
+  If `type: <type>` option is passed, it will try to parse the value and will
+  return `{:error, "Failed to parse <value> as <type>"}` in case of failure. By
+  default, the argument is interpreted as a string and returned as is.
 
-  If `path` points to a directory, `{:error, :is_dir}` will be returned unless
-  `list: true` option is passed.
+  If `path` points to a directory, `{:error, "Not a file"}` will be returned
+  unless `dir: true` option is passed.
+
+  ## Types
+
+    * `:str` (default) - do not transform the value in any way
+    * `:json` - the value is decoded as JSON
+    * `:term` - the value is decoded with `:erlang.binary_to_term`
+    * `<function>` - the value is passed through the provided function of one
+      argument
+
+  ## etcd options
+
+    * `wait: <bool>` - if `true`, waits for the value at `path` to change; the
+      timeout is reset to `:infinity` unless overriden explicitly
+
+    * `waitIndex: <int>` - specify the point in etcd's timeline to start
+      waiting from
+
   """
-  # options: [type: :int, timeout: ...]
-  # options: [type: fn(x) -> ... end]
   def fetch(path, options \\ []) do
-    {api_options, options} = Enum.partition(options, fn {name, _} -> name in [:dir, :wait, :waitIndex] end)
-    {api_options, options} = case Keyword.pop(options, :condition, nil) do
-      {nil, options} -> {api_options, options}
-      {condition, options} -> {condition ++ api_options, options}
-    end
+    {api_options, options} = split_options(options, [:type, :dir, :condition])
     case API.get(path, api_options, options) do
       {:ok, value} -> process_api_value(value, options)
       {:error, _, %{"message" => message}} -> {:error, message}
@@ -59,7 +79,7 @@ defmodule Diamorfosi do
   def fetch!(path, options \\ []) do
     case fetch(path, options) do
       {:ok, value} -> value
-      {:error, reason} -> raise Diamorfosi.KeyError, message: inspect(reason)
+      {:error, message} -> raise Diamorfosi.KeyError, message: "fetch #{path}: #{message}"
     end
   end
 
@@ -200,22 +220,34 @@ defmodule Diamorfosi do
 
   ###
 
+  defp split_options(options, api_keys) do
+    {options, api_options} = Enum.partition(options, fn {name, _} ->
+      Enum.member?(api_keys, name)
+    end)
+    {api_options, options} = case Keyword.pop(options, :condition, nil) do
+      {nil, options} -> {api_options, options}
+      {condition, options} -> {condition ++ api_options, options}
+    end
+    {api_options, options}
+  end
+
   defp process_api_value(value, options) do
     node = value["node"]
-    case {node["dir"], Keyword.get(options, :list, false)} do
+    case {node["dir"], Keyword.get(options, :dir, false)} do
       {true, true} -> {:ok, process_dir_listing(node["nodes"], options)}
-      {true, false} -> {:error, :is_dir}
+      {true, false} -> {:error, "Not a file"}
       {nil, _} -> decode_api_node(node, options)
     end
   end
 
   defp decode_api_node(node, options) do
     value = node["value"]
+    type = Keyword.get(options, :type, :str)
     try do
-      {:ok, decode_value(value, Keyword.get(options, :type, :str))}
+      {:ok, decode_value(value, type)}
     rescue
       # FIXME: this may hide programming bugs
-      _ -> {:error, :bad_type}
+      _ -> {:error, "Failed to parse #{value} as #{value}"}
     end
   end
 

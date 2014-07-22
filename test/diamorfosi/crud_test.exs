@@ -20,6 +20,22 @@ defmodule DiamorfosiTest.CrudTest do
     assert Diamorfosi.get("/crud_test/dir/c", :def) == :def
   end
 
+  test "raising fetch" do
+    assert {:error, "Key not found"} = Diamorfosi.fetch("/crud_test/a")
+    assert_raise Diamorfosi.KeyError, "fetch /crud_test/a: Key not found", fn ->
+      Diamorfosi.fetch!("/crud_test/a")
+    end
+  end
+
+  test "get directory" do
+    :ok = Diamorfosi.set "/crud_test/dir/a", "A node"
+    :ok = Diamorfosi.set "/crud_test/dir/b", "B node"
+    assert_raise Diamorfosi.KeyError, "get /crud_test/dir: Not a file", fn ->
+      Diamorfosi.get("/crud_test/dir", nil)
+    end
+    assert %{"a" => "A node", "b" => "B node"} = Diamorfosi.get("/crud_test/dir", nil, dir: true)
+  end
+
   test "delete" do
     :ok = Diamorfosi.set "/crud_test/a", "A node"
     assert Diamorfosi.fetch!("/crud_test/a") == "A node"
@@ -39,8 +55,8 @@ defmodule DiamorfosiTest.CrudTest do
   test "implicit dir" do
     :ok = Diamorfosi.set "/crud_test/dir/a", "A node"
     :ok = Diamorfosi.set "/crud_test/dir/b", "B node"
-    assert Diamorfosi.fetch("/crud_test/dir") == {:error, :is_dir}
-    assert Diamorfosi.fetch("/crud_test/dir", list: true) ==
+    assert Diamorfosi.fetch("/crud_test/dir") == {:error, "Not a file"}
+    assert Diamorfosi.fetch("/crud_test/dir", dir: true) ==
            {:ok, %{"a" => "A node", "b" => "B node"}}
   end
 
