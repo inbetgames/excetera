@@ -398,19 +398,6 @@ defmodule Excetera do
     end
   end
 
-  # FIXME: what is this?
-  defmacro serial(dataset_name, code) do
-    quote do
-      case Excetera.set("/atoms/#{unquote(dataset_name)}", Jazz.encode!([processing: true]), [prevExist: false]) do
-        false -> {:error, unquote(dataset_name)}
-        _set_result ->
-          result = unquote(code)
-          Excetera.set("/atoms/#{unquote(dataset_name)}", Jazz.encode!([processing: false]), [prevExist: true, ttl: 1])
-          result
-      end
-    end
-  end
-
   ###
 
   defp split_options(options, api_keys) do
