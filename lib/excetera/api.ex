@@ -71,6 +71,10 @@ defmodule Excetera.API do
 
       %HTTPoison.Response{status_code: 307} ->
         # try again, die hard mode
+        #
+        # An etcd instance could be placed behind a proxy or a load balancer,
+        # in which case the value of the Location header will be invalid.
+        # For this reason we are repeating the request at the same URL.
         request(type, url, headers, body, options)
 
       %HTTPoison.Response{status_code: status, body: body} ->

@@ -6,6 +6,15 @@ Bindings for [etcd][1]'s HTTP API.
   [1]: https://github.com/coreos/etcd
 
 
+## Status
+
+This is alpha-quality software. Everything described in the docs should work as
+advertised, but some edge-cases might still pop up.
+
+One particular feature that is likely to malfunction is request timeouts. Any
+help testing those or pinpointing issues with them will be appreciated.
+
+
 ## Usage
 
 Add Excetera as a dependency to your project and modify the `:etcd_url`
