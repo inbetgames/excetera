@@ -366,6 +366,15 @@ defmodule Excetera do
   Returns `{:ok, <key>}` with the new key in case of success or `{:error,
   <reason>}` in case of failure.
 
+  ## Options
+
+    * `type: <type>` - same as in `set/3`
+    * `timeout: <int>` - request timeout in milliseconds
+
+  ## etcd options
+
+    * `ttl: <int>` - set the time-to-live for the value in seconds
+
   Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_10
 
   ## Examples
@@ -376,8 +385,10 @@ defmodule Excetera do
 
   """
   def put(path, value, options \\ []) do
-    api_val = encode_value(value, Keyword.get(options, :type, :str))
-    case API.post(path, api_val, options) do
+    {api_options, options} = split_options(options, [:type, :timeout])
+    {type, options} = Keyword.pop(options, :type, :str)
+    api_val = encode_value(value, type)
+    case API.post(path, api_val, api_options, options) do
       {:ok, %{"node" => %{"key" => key}}} -> {:ok, trunc_key(key)}
       {:error, %API.Error{message: message}} -> {:error, message}
     end

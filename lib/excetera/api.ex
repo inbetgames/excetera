@@ -26,13 +26,14 @@ defmodule Excetera.API do
     request(:put, url, @body_headers, body, options)
   end
 
-  def post("/"<>_=path, value, options) do
-    {timeout, options} = Keyword.pop(options, :timeout, default_timeout)
+  def post("/"<>_=path, value, api_options, options \\ []) do
+    {ttl, api_options} = Keyword.pop(api_options, :ttl, nil)
+    url = build_url(path, api_options)
 
-    url = build_url(path, [])
-    body = encode_body([value: value] ++ options)  # FIXME: do we really need to encode options?
+    body_params = [value: value, ttl: ttl] |> filter_nil
+    body = params_to_query_string(body_params)
 
-    request(:post, url, @body_headers, body, [timeout: timeout])
+    request(:post, url, @body_headers, body, options)
   end
 
   def delete("/"<>_=path, api_options, options \\ []) do
@@ -94,12 +95,6 @@ defmodule Excetera.API do
         Jazz.decode!(body, as: Excetera.API.Error)
       _ -> nil
     end
-  end
-
-  defp encode_body(list) do
-    list
-    |> Enum.map(fn {key, val} -> "#{key}=#{val}" end)
-    |> Enum.join("&")
   end
 
   defp etcd_url, do: Application.get_env(:excetera, :etcd_url)
