@@ -19,6 +19,9 @@ Now you can fetch and set values:
 
 ```elixir
 Excetera.set!("/test/key", "value")
+
+Excetera.fetch("/test/key")
+#=> {:ok, "value}
 Excetera.fetch!("/test/key")
 #=> "value"
 
@@ -35,6 +38,11 @@ map = %{any: "elixir term", can: {'be', 'encoded'}}
 Excetera.set!("/test/term", map, type: :term)
 Excetera.fetch!("/test/term", type: :term)
 #=> %{any: "elixir term", can: {'be', 'encoded'}}
+
+json_map = %{json: ['is', 'lossy']}
+Excetera.set!("/test/json", json_map, type: :json)
+Excetera.fetch!("/test/json", type: :json)
+#=> %{"json" => ['is', 'lossy']}
 ```
 
 You can also wait for new changes to arrive:
