@@ -15,11 +15,12 @@ defmodule Excetera.API do
   end
 
   def put("/"<>_=path, value, api_options, options \\ []) do
+    {ttl, api_options} = Keyword.pop(api_options, :ttl, nil)
+    {dir, api_options} = Keyword.pop(api_options, :dir, nil)
     url = build_url(path, api_options)
 
-    {ttl, api_options} = Keyword.pop(api_options, :ttl, nil)
     if api_options[:dir], do: value = nil
-    body_params = [value: value, ttl: ttl] |> filter_nil
+    body_params = [value: value, ttl: ttl, dir: dir] |> filter_nil
     body = params_to_query_string(body_params)
 
     request(:put, url, @body_headers, body, options)

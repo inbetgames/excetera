@@ -115,9 +115,9 @@ defmodule ExceteraTest.ApiTest do
     assert {:error, %API.Error{message: "Not a directory"}}
            = API.put("/api_test/a/b", "...", [])
     assert {:error, %API.Error{message: "Not a directory"}}
-           = API.put("/api_test/a/b", nil, dir: true)
+           = API.put("/api_test/a/b", 114, dir: true)
     assert {:ok, %{"action" => "set", "node" => %{"dir" => true}, "prevNode" => %{"value" => "hello"}}}
-           = API.put("/api_test/a", nil, dir: true)
+           = API.put("/api_test/a", 'abc', dir: true)
 
     assert {:ok, nil} = API.put("/api_test/b", "hello", [], decode_body: false)
     assert {:ok, nil} = API.put("/api_test/a/b/c", "hello", [], decode_body: false)
