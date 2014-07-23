@@ -24,6 +24,15 @@ defmodule Excetera do
   See `fetch/2` for details.
 
   Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_5
+
+  ## Examples
+
+      Excetera.get("/non/existent/key", 123)
+      #=> 123
+
+      Excetera.get("/timeout/too/small", 'abc', timeout: 1)
+      #=> 'abc'
+
   """
   def get(path, default, options \\ []) do
     case fetch(path, options) do
@@ -35,6 +44,13 @@ defmodule Excetera do
 
   @doc """
   Synonym for `get(path, default, [type: :term] ++ options)`.
+
+  ## Examples
+
+      Excetera.set_term("/test/term", {'hello', :world})
+      Excetera.get_term("/test/term", :novalue)
+      #=> {'hello', :world})
+
   """
   def get_term(path, default, options \\ []) do
     get(path, default, [type: :term] ++ options)
@@ -123,6 +139,13 @@ defmodule Excetera do
 
   Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_3,
              https://coreos.com/docs/distributed-configuration/etcd-api/#toc_12
+
+  ## Examples
+
+      Excetera.set("/test/key", 123, condition: [prevValue: "122"])
+
+      Excetera.set("/test/key", 123, ttl: 13, condition: [prevExist: false])
+
   """
   def set(path, value, options \\ []) do
     {api_options, options} = split_options(options, [:type, :condition, :timeout])
@@ -149,6 +172,13 @@ defmodule Excetera do
 
   @doc """
   Synonym for `set(path, value, [type: :term] ++ options)`.
+
+  ## Examples
+
+      Excetera.set_term("/test/term", {'hello', :world})
+      Excetera.get_term("/test/term", :novalue)
+      #=> {'hello', :world})
+
   """
   def set_term(path, value, options \\ []) do
     set(path, value, [type: :term] ++ options)
@@ -177,6 +207,13 @@ defmodule Excetera do
 
   Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_7,
              https://coreos.com/docs/distributed-configuration/etcd-api/#toc_16
+
+  ## Examples
+
+      Excetera.delete("/test/dir", recursive: true)
+
+      Excetera.delete("/test/key", condition: [prevValue: "<secret>"])
+
   """
   def delete(path, options \\ []) do
     {api_options, options} = split_options(options, [:condition, :timeout])
@@ -255,6 +292,18 @@ defmodule Excetera do
     * `recursive: <bool>` - whether to fetch the contents of child directories
 
   Reference: https://coreos.com/docs/distributed-configuration/etcd-api/#toc_15
+
+  ## Examples
+
+      Excetera.set!("/test/dir/a", 1)
+      Excetera.set!("/test/dir/b/c", 2)
+
+      Excetera.lsdir("/test/dir")
+      #=> {:ok, %{"a" => "1", "b" => %{}}}
+
+      Excetera.lsdir("/test/dir", recursive: true)
+      #=> {:ok, %{"a" => "1", "b" => %{"c" => "2"}}}
+
   """
   def lsdir(path, options \\ []) do
     {api_options, options} = split_options(options, [:timeout])
