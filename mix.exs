@@ -5,7 +5,7 @@ defmodule Excetera.Mixfile do
     [
       app: :excetera,
       version: "0.0.1",
-      elixir: "~> 0.14.0",
+      elixir: "~> 1.0.0",
       deps: deps
     ]
   end
@@ -20,8 +20,8 @@ defmodule Excetera.Mixfile do
 
   defp deps do
     [
-      {:httpoison, github: "edgurgel/httpoison"},
-      {:jazz, github: "meh/jazz"}
+      {:httpoison, "~> 0.5.0"},
+      {:jazz, "~> 0.2.1"}
     ]
   end
 end
